@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardened Swarm & Gentoo Linux Security Architecture Specification — ZenthraCore</title>
+<meta http-equiv="onion-location" content="http://zenthra7ubutlvmohgjhdopshukaftchhgnlfdqdqzj45k7pp7braqad.onion/incidents/zero-trust-swarm-gentoo.html" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0f;--bg2:#0f1218;--surface:#1a2030;--border:#2a3548;--border2:#3a4a60;--text:#c8d4e8;--text-dim:#7a90b0;--text-muted:#4a5a70;--accent:#00d4ff;--danger:#ff4444;--warn:#ff9900;--green:#00ff88;--purple:#a855f7;--heading:#e8f0ff;--code-bg:#0d1117;}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:16px;line-height:1.75;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:relative;padding:80px 0 60px;border-bottom:1px solid var(--border);overflow:hidden;}
+header::after{content:'';position:absolute;top:-100px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,212,255,.06) 0%,transparent 70%);pointer-events:none;}
+.header-inner{max-width:860px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
+.tag-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.tag{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 12px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;}
+.tag-incident{background:rgba(255,68,68,.12);color:#ff6666;border:1px solid rgba(255,68,68,.25);}
+.tag-dfir{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.25);}
+.tag-linux{background:rgba(0,212,255,.10);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.tag-wp{background:rgba(0,255,136,.08);color:#4ade80;border:1px solid rgba(0,255,136,.2);}
+h1{font-family:'Unbounded',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:900;color:var(--heading);line-height:1.2;margin-bottom:24px;letter-spacing:-.02em;}
+h1 span{color:var(--accent);}
+.subtitle{font-size:17px;color:var(--text-dim);line-height:1.65;max-width:680px;margin-bottom:36px;}
+.meta{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.meta-item{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+.dot{width:6px;height:6px;border-radius:50%;}
+.dot-red{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.dot-yellow{background:var(--warn);box-shadow:0 0 6px var(--warn);}
+
+/* TLDR */
+.tldr{max-width:860px;margin:48px auto;padding:0 32px;position:relative;z-index:1;}
+.tldr-box{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(0,144,204,.03));border:1px solid rgba(0,212,255,.2);border-left:3px solid var(--accent);border-radius:8px;padding:28px 32px;}
+.tldr-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;}
+.tldr-box ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.tldr-box li{display:flex;align-items:flex-start;gap:12px;font-size:14.5px;color:var(--text);}
+.tldr-box li::before{content:'→';color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:700;flex-shrink:0;margin-top:1px;}
+
+/* LAYOUT */
+.container{max-width:860px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
+
+/* TOC */
+.toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px 32px;margin-bottom:56px;}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:18px;}
+.toc ol{list-style:none;counter-reset:toc;display:flex;flex-direction:column;gap:8px;}
+.toc li{counter-increment:toc;display:flex;align-items:baseline;gap:12px;}
+.toc li::before{content:counter(toc,decimal-leading-zero);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);flex-shrink:0;}
+.toc a{color:var(--text-dim);text-decoration:none;font-size:14px;transition:color .2s;}
+.toc a:hover{color:var(--accent);}
+
+/* SECTIONS */
+.section{margin-bottom:72px;}
+.section-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:4px;flex-shrink:0;}
+h2{font-family:'Unbounded',sans-serif;font-size:clamp(17px,2.5vw,25px);font-weight:700;color:var(--heading);letter-spacing:-.01em;line-height:1.25;}
+h3{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--heading);margin:36px 0 16px;letter-spacing:-.01em;}
+p{margin-bottom:18px;color:var(--text);}
+strong{color:var(--heading);font-weight:600;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;margin:28px 0;font-family:'Manrope',sans-serif;font-size:14px;border:1px solid var(--border);background:var(--bg2);border-radius:8px;overflow:hidden;}
+th{background:var(--surface);color:var(--heading);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;text-align:left;padding:12px 16px;border-bottom:2px solid var(--border);}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text-dim);}
+tr:hover{background:rgba(255,255,255,0.01);}
+
+/* CODE */
+.code-block{margin:28px 0;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--code-bg);}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
+.code-dots{display:flex;gap:6px;}
+.code-dot{width:10px;height:10px;border-radius:50%;}
+.code-dot:nth-child(1){background:#ff5f57;}
+.code-dot:nth-child(2){background:#febc2e;}
+.code-dot:nth-child(3){background:#28c840;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:.05em;}
+.code-content{padding:20px 22px;overflow-x:auto;}
+pre{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cdd6f4;white-space:pre;}
+.c-comment{color:#6272a4;font-style:italic;}.c-cmd{color:#50fa7b;}.c-out{color:#8be9fd;}.c-warn{color:#ffb86c;}.c-danger{color:#ff5555;}.c-prompt{color:#6272a4;}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);color:var(--accent);padding:2px 7px;border-radius:4px;}
+
+/* CALLOUTS */
+.callout{border-radius:8px;padding:22px 26px;margin:28px 0;display:flex;gap:18px;}
+.callout-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+.callout-title{font-weight:700;font-size:14px;margin-bottom:6px;}
+.callout-body p{font-size:14.5px;margin-bottom:0;line-height:1.65;}
+.callout-danger{background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.2);border-left:3px solid var(--danger);}
+.callout-danger .callout-title{color:#ff6666;}
+.callout-warn{background:rgba(255,153,0,.07);border:1px solid rgba(255,153,0,.2);border-left:3px solid var(--warn);}
+.callout-warn .callout-title{color:#ffa520;}
+.callout-info{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.18);border-left:3px solid var(--accent);}
+.callout-info .callout-title{color:var(--accent);}
+.callout-success{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.18);border-left:3px solid var(--green);}
+.callout-success .callout-title{color:var(--green);}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:28px;margin:28px 0;}
+.timeline::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:linear-gradient(to bottom,var(--accent),var(--border));}
+.timeline-item{position:relative;margin-bottom:28px;padding-left:20px;}
+.timeline-item::before{content:'';position:absolute;left:-28px;top:7px;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);box-shadow:0 0 8px rgba(0,212,255,.4);}
+.timeline-item.danger::before{border-color:var(--danger);box-shadow:0 0 8px rgba(255,68,68,.4);}
+.timeline-item.warn::before{border-color:var(--warn);box-shadow:0 0 8px rgba(255,153,0,.4);}
+.timeline-item.success::before{border-color:var(--green);box-shadow:0 0 8px rgba(0,255,136,.4);}
+.timeline-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+.timeline-title{font-weight:700;color:var(--heading);margin-bottom:6px;font-size:15px;}
+.timeline-desc{font-size:14px;color:var(--text-dim);line-height:1.6;}
+
+/* AUTHOR */
+.author-card{display:flex;gap:20px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px 28px;margin:48px 0;}
+.author-avatar{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:2px solid var(--border2);}
+.author-name{font-weight:700;font-size:15px;color:var(--heading);margin-bottom:4px;}
+.author-role{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px;}
+.author-bio{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-bottom:0;}
+.divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:56px 0;}
+
+/* NAVIGATION */
+.top-nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,12,15,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:16px 32px;}
+.top-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;transition:opacity .2s;}
+.nav-logo:hover{opacity:.8;}
+.nav-logo img{height:32px;width:32px;object-fit:contain;}
+.nav-logo-text{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700;color:var(--heading);}
+.nav-logo-text span{color:var(--accent);}
+.nav-back{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:13px;transition:all .2s;}
+.nav-back:hover{background:var(--border);border-color:var(--accent);color:var(--accent);}
+.nav-back svg{width:16px;height:16px;}
+body{padding-top:64px;}
+
+footer{border-top:1px solid var(--border);padding:40px 32px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+
+@media(max-width:640px){.header-inner,.container{padding:0 20px;}.section-header{flex-direction:column;align-items:flex-start;gap:8px;}.author-card{flex-direction:column;}.top-nav{padding:12px 20px;}.nav-logo-text{font-size:16px;}.nav-back{font-size:12px;padding:6px 12px;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.section,.code-block,.callout{animation:fadeUp .45s ease both;}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-nav.webp" alt="ZenthraCore" />
+      <span class="nav-logo-text">Zenthra<span>Core</span></span>
+    </a>
+    <a href="/" class="nav-back">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Back to index
+    </a>
+  </div>
+</nav>
+
+<header>
+  <div class="header-inner">
+    <div class="tag-row">
+      <span class="tag tag-linux" style="background:rgba(0, 255, 136, 0.08);color:#4ade80;border:1px solid rgba(0, 255, 136, 0.2);">Zero Trust</span>
+      <span class="tag tag-dfir" style="background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.25);">Docker Swarm</span>
+      <span class="tag tag-linux">Gentoo Hardened</span>
+      <span class="tag tag-incident" style="background:rgba(0,212,255,.10);color:var(--accent);border:1px solid rgba(0,212,255,.2);">DevSecOps</span>
+    </div>
+    <h1>Hardened Swarm & Gentoo: <span>Security Architecture</span></h1>
+    <p class="subtitle">A practical guide to deploying high-security infrastructure. Strict network segmentations, customized Gentoo Hardened Linux compilation/LSM configurations, and mTLS enforcement across all communication paths.</p>
+    <div class="meta">
+      <div class="meta-item"><span class="dot dot-green"></span>Document Type: Architecture Specification</div>
+      <div class="meta-item"><span class="dot dot-green"></span>Status: Deployed in Production</div>
+      <div class="meta-item"><span class="dot dot-green"></span>Threat Model: Zero Trust / Defense in Depth</div>
+    </div>
+    <div class="meta" style="margin-top:12px;">
+      <div class="meta-item">Target Stack: Gentoo hardened-sources / Docker Swarm / AWS VPC / Laravel Octane / PgBouncer</div>
+    </div>
+  </div>
+</header>
+
+<div class="tldr">
+  <div class="tldr-box">
+    <div class="tldr-label">TL;DR — Key Architectural Pillars</div>
+    <ul>
+      <li><strong>Network Perimeter (AWS VPC & NLB)</strong>: Isolated network environment with manual routing tables. AWS NLB operates in TCP Passthrough (L4) mode, delegating TLS termination to the backend NGINX instances.</li>
+      <li><strong>Swarm Orchestration</strong>: Complete microservice isolation enforced via 10+ dedicated overlay networks (strict separation principle) to prevent lateral movement.</li>
+      <li><strong>Host OS (Gentoo Linux)</strong>: Operating system built from source with the hardened profile. The Linux kernel is compiled with strict lockdown LSMs, memory protection (W^X), and Landlock sandboxing. All redundant background daemons are removed.</li>
+      <li><strong>Containerization & Software</strong>: All runtime images are hardened (run as non-root, read-only root FS, ephemeral tmpfs, capability drops: CAP_DROP ALL). Transition from php-fpm to Laravel Octane with FrankenPHP achieved a 14x performance boost.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="container">
+  <div class="toc">
+    <div class="toc-title">// Table of Contents</div>
+    <ol>
+      <li><a href="#en-s1">AWS Architecture: Network Perimeter & Load Balancing</a></li>
+      <li><a href="#en-s2">Docker Swarm: Orchestration & Overlay Network Segmentation</a></li>
+      <li><a href="#en-s3">Gentoo Linux: Hardened System & Kernel Compilation</a></li>
+      <li><a href="#en-s4">Secure CI/CD Pipeline: Code Chain of Trust</a></li>
+      <li><a href="#en-s5">Runtime Container Hardening (Frontend, Backend, DB, Redis)</a></li>
+      <li><a href="#en-s6">Zero Trust & Defense in Depth Model</a></li>
+      <li><a href="#en-s7">OWASP Top 10 Security Alignment</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="en-s1">
+    <div class="section-header"><span class="section-num">01</span><h2>AWS Architecture: Network Perimeter & Load Balancing</h2></div>
+    <p>The infrastructure is deployed within an isolated Amazon Web Services Virtual Private Cloud (VPC) with a custom configuration designed to maximize control over the trusted zone.</p>
+    
+    <h3>VPC Configuration</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Configured Value</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CIDR Block</td>
+          <td><code>10.31.0.0/16</code></td>
+          <td>Dedicated private IP range with zero risk of collision.</td>
+        </tr>
+        <tr>
+          <td>VPC ID</td>
+          <td><code>vpc-0123456789abcdef0</code> (anonymized)</td>
+          <td>Unique virtual network identifier.</td>
+        </tr>
+        <tr>
+          <td>Instance Tenancy</td>
+          <td><code>default</code></td>
+          <td>Hardware tenancy mode.</td>
+        </tr>
+        <tr>
+          <td>Name (Tag Name)</td>
+          <td><code>v2uat.secure-platform.net</code></td>
+          <td>Environment tag for resource control.</td>
+        </tr>
+        <tr>
+          <td>Internet Gateway Block</td>
+          <td><code>off</code> (manual routing)</td>
+          <td>Public internet access is strictly restricted and managed via Security Groups.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>All subnets and routing tables are configured manually, avoiding default VPC resources and automatic resource association.</p>
+
+    <h3>Load Balancing (AWS NLB)</h3>
+    <p>Incoming platform traffic passes through an AWS Network Load Balancer (NLB) operating in <strong>TCP Passthrough (L4)</strong> mode. The TLS session is not terminated at the load balancer; instead, it is passed directly to the NGINX layer within the containers. This prevents traffic decryption inside the public cloud outside the controlled boundary.</p>
+    
+    <h3>Listener Configuration:</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Protocol</td>
+          <td><code>TCP</code></td>
+        </tr>
+        <tr>
+          <td>Port</td>
+          <td><code>443</code></td>
+        </tr>
+        <tr>
+          <td>TLS Termination</td>
+          <td>⚠️ No (Passthrough to NGINX)</td>
+        </tr>
+        <tr>
+          <td>Action Type</td>
+          <td><code>forward</code></td>
+        </tr>
+        <tr>
+          <td>Target Group</td>
+          <td><code>nginx-targets (port 443)</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <div class="callout-title">Node Health Check (HealthCheck)</div>
+        <p>Health checks are configured over TCP directly to the container's active port (interval: 30s, timeout: 10s, healthy threshold: 5, unhealthy: 2). The check is performed without decrypting traffic.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s2">
+    <div class="section-header"><span class="section-num">02</span><h2>Docker Swarm: Orchestration & Overlay Network Segmentation</h2></div>
+    <p>Container orchestration is handled by native Docker Swarm. All services in the stack (frontend, backend, Redis, PgBouncer, and helper utilities) are isolated at the network level using dedicated overlay networks.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-title">The Danger of a "Shared" Container Network</div>
+        <p>Using a single overlay network for all containers in a cluster negates network security: any compromised container could initiate connections to the database, cache, or internal APIs. We enforce a "strict isolation" principle.</p>
+      </div>
+    </div>
+
+    <h3>Overlay Network Segmentation Map</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Network Name (Overlay Network)</th>
+          <th>Connection Target</th>
+          <th>Services with Access</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>frontend-net</code></td>
+          <td>Route: NGINX ↔ Frontend</td>
+          <td><code>nginx</code>, <code>frontend</code></td>
+        </tr>
+        <tr>
+          <td><code>backend-net</code></td>
+          <td>Route: NGINX ↔ Backend</td>
+          <td><code>nginx</code>, <code>backend</code></td>
+        </tr>
+        <tr>
+          <td><code>ws-nginx-net</code></td>
+          <td>Route: NGINX ↔ WebSocket</td>
+          <td><code>nginx</code>, <code>websocket</code></td>
+        </tr>
+        <tr>
+          <td><code>backend-db-net</code></td>
+          <td>Route: Backend ↔ PgBouncer</td>
+          <td><code>backend</code>, <code>pgbouncer</code></td>
+        </tr>
+        <tr>
+          <td><code>backend-redis-net</code></td>
+          <td>Route: Backend ↔ Redis (cache/queues)</td>
+          <td><code>backend</code>, <code>redis</code></td>
+        </tr>
+        <tr>
+          <td><code>ws-redis-net</code></td>
+          <td>Route: WebSocket ↔ Redis (Pub/Sub)</td>
+          <td><code>websocket</code>, <code>redis</code></td>
+        </tr>
+        <tr>
+          <td><code>backend-json2xml-net</code></td>
+          <td>Route: Backend ↔ JSON2XML Microservice</td>
+          <td><code>backend</code>, <code>json2xml</code></td>
+        </tr>
+        <tr>
+          <td><code>backend-ws-net</code></td>
+          <td>Route: Backend ↔ WebSocket</td>
+          <td><code>backend</code>, <code>websocket</code></td>
+        </tr>
+        <tr>
+          <td><code>pdf-nginx-net</code></td>
+          <td>Route: PDF Generator ↔ NGINX</td>
+          <td><code>pdf</code>, <code>nginx</code></td>
+        </tr>
+        <tr>
+          <td><code>pdf-backend-net</code></td>
+          <td>Route: PDF Generator ↔ Backend</td>
+          <td><code>pdf</code>, <code>backend</code></td>
+        </tr>
+        <tr>
+          <td><code>portainer-agent</code></td>
+          <td>Management Loop: Portainer Agent</td>
+          <td>Portainer System Container</td>
+        </tr>
+        <tr>
+          <td><code>(No network)</code></td>
+          <td>Watcher (Cluster Monitoring)</td>
+          <td><code>watcher</code> (only docker.sock access)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Thanks to this mapping, the network layout prevents lateral movement: even if the frontend is compromised, the attacker has no network route to the database, PgBouncer, or Redis.</p>
+  </div>
+
+  <div class="section" id="en-s3">
+    <div class="section-header"><span class="section-num">03</span><h2>Gentoo Linux: Hardened System & Kernel Compilation</h2></div>
+    <p><strong>Gentoo Linux</strong> with the hardened profile is used as the base operating system on all host servers. Excluding systemd, snapd, cloud-init, and PAM reduced the attack surface to an absolute minimum.</p>
+    <p>World updates are performed strictly via <code>emerge</code> with pre-validation of package hashes. We run a <strong>binpkg workflow</strong>: packages are compiled once inside a secure CI environment and then distributed to production hosts as binary packages.</p>
+
+    <h3>Hardened Linux Kernel Configuration</h3>
+    <p>The Linux kernel is built manually from the <code>hardened-sources</code> branch. Key security options enabled in the kernel:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Kernel Option</th>
+          <th>Status</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>CONFIG_SECURITY</code></td>
+          <td>✅ Enabled</td>
+          <td>Enables the Linux Security Module (LSM) framework</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_SECURITY_SELINUX</code></td>
+          <td>✅ Enabled</td>
+          <td>Mandatory Access Control (MAC) at the OS level</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_SECURITY_LOCKDOWN_LSM</code></td>
+          <td>✅ Enabled</td>
+          <td>Locks down raw kernel memory access from the superuser</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_SECURITY_LOADPIN</code></td>
+          <td>✅ Enabled</td>
+          <td>Restricts kernel module loading to a trusted initrd filesystem</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_STRICT_KERNEL_RWX</code></td>
+          <td>✅ Enabled</td>
+          <td>Kernel memory page protection: Write XOR Execute (W^X)</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_VMAP_STACK</code></td>
+          <td>✅ Enabled</td>
+          <td>Protects against kernel stack overflows using virtually mapped stacks</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_HARDENED_USERCOPY</code></td>
+          <td>✅ Enabled</td>
+          <td>Protects against memory leaks and corruption during copies between user space and kernel space</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_SECURITY_LANDLOCK</code></td>
+          <td>✅ Enabled</td>
+          <td>Allows unprivileged userspace processes to configure secure sandbox environments</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_FORTIFY_SOURCE</code></td>
+          <td>✅ Enabled</td>
+          <td>Detects buffer overflows in various glibc functions at runtime</td>
+        </tr>
+        <tr>
+          <td><code>CONFIG_STATIC_USERMODEHELPER</code></td>
+          <td>✅ Enabled</td>
+          <td>Restricts the path of user-mode helper binaries to prevent execution redirection</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Secure Compiler Flags (Toolchain-Level Hardening)</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">make.conf</span></div>
+      <div class="code-content"><pre><span class="c-comment"># Compiler flags for building all system libraries and binaries</span>
+<span class="c-cmd">COMMON_FLAGS</span>=<span class="c-out">"-O2 -pipe -mtune=generic -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE"</span>
+<span class="c-cmd">LDFLAGS</span>=<span class="c-out">"-Wl,-O1 -Wl,--as-needed -Wl,-z,relro,-z,now -pie"</span></pre></div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s4">
+    <div class="section-header"><span class="section-num">04</span><h2>Secure CI/CD Pipeline: Code Chain of Trust</h2></div>
+    <p>The build and deployment process is fully automated, preventing untested or vulnerable code from entering the Docker Swarm production environment.</p>
+    
+    <div class="timeline">
+      <div class="timeline-item success">
+        <div class="timeline-date">Step 1 · Git Push</div>
+        <div class="timeline-title">Push to Private Bitbucket</div>
+        <div class="timeline-desc">Developers push code to a secure self-hosted Bitbucket repository. The commit triggers a build webhook.</div>
+      </div>
+      <div class="timeline-item success">
+        <div class="timeline-date">Step 2 · Bamboo CI Build</div>
+        <div class="timeline-title">Bamboo CI & Docker Build</div>
+        <div class="timeline-desc">The Bamboo agent runs an isolated Docker build using hardened base OS templates.</div>
+      </div>
+      <div class="timeline-item warn">
+        <div class="timeline-date">Step 3 · Trivy Scanning</div>
+        <div class="timeline-title">Trivy Vulnerability Scan</div>
+        <div class="timeline-desc">Before publication, images are scanned with Trivy. If critical vulnerabilities (CVEs) or policy violations are found, the build fails immediately.</div>
+      </div>
+      <div class="timeline-item success">
+        <div class="timeline-date">Step 4 · Cosign Signature</div>
+        <div class="timeline-title">Cosign Signature</div>
+        <div class="timeline-desc">Verified images are signed cryptographically using Cosign. The signing keys are stored in an external HSM/KMS.</div>
+      </div>
+      <div class="timeline-item success">
+        <div class="timeline-date">Step 5 · Harbor & Swarm Deploy</div>
+        <div class="timeline-title">Harbor Push & API Deployment</div>
+        <div class="timeline-desc">Signed images are pushed to a private Harbor registry. The Swarm Manager pulls the image over secure HTTPS/mTLS and deploys it to worker nodes using strict placement constraints.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s5">
+    <div class="section-header"><span class="section-num">05</span><h2>Runtime Container Hardening (Frontend, Backend, DB, Redis)</h2></div>
+    <p>Every container running in the Swarm cluster is configured according to the principle of least privilege:</p>
+    
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">docker-compose.yml — hardened container template</span></div>
+      <div class="code-content"><pre><span class="c-cmd">read_only:</span> <span class="c-out">true</span>                <span class="c-comment"># Disable writes to the container root filesystem</span>
+<span class="c-cmd">tmpfs:</span>
+  - <span class="c-out">/tmp</span>                      <span class="c-comment"># Limit write operations to memory (tmpfs)</span>
+<span class="c-cmd">security_opt:</span>
+  - <span class="c-out">no-new-privileges:true</span>     <span class="c-comment"># Block process privilege escalation</span>
+<span class="c-cmd">cap_drop:</span>
+  - <span class="c-out">ALL</span>                       <span class="c-comment"># Drop all Linux kernel capabilities</span>
+<span class="c-cmd">user:</span> <span class="c-out">"1010:1010"</span>              <span class="c-comment"># Run process as a non-root user</span></pre></div>
+    </div>
+
+    <h3>Hardened Component Details</h3>
+    <ul>
+      <li><strong>Frontend (Nginx + Static UI)</strong>: Nginx receives external traffic and terminates SSL/TLS at the container border. mTLS is enforced for communication between Nginx and frontend containers. The root filesystem is mounted as read-only. All HTTP security headers (HSTS, CSP, X-Frame-Options) are configured to achieve an A+ score on SSL Labs.</li>
+      <li><strong>Backend (Laravel Octane & FrankenPHP)</strong>: Upgrading from the classic php-fpm setup to a modern Laravel Octane + FrankenPHP stack eliminated the overhead of process forking. The application runs persistently in memory (built-in event loop). Performance scaled from <strong>3.5 to 50 requests per second</strong> (a 14x increase). Traffic between Nginx and the backend is protected by strict mTLS with client certificate verification on the FrankenPHP side.</li>
+      <li><strong>PgBouncer</strong>: A lightweight connection pooler for AWS RDS PostgreSQL. PgBouncer is isolated from public access and resides entirely within the private overlay network. Connections from the backend are encrypted using TLS 1.2 with mandatory mTLS.</li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">pgbouncer.ini</span></div>
+      <div class="code-content"><pre><span class="c-prompt">[pgbouncer]</span>
+<span class="c-cmd">client_tls_sslmode</span> = <span class="c-out">verify-full</span>
+<span class="c-cmd">client_tls_key_file</span> = <span class="c-out">/run/secrets/wildcard.secure-platform.net.key</span>
+<span class="c-cmd">client_tls_cert_file</span> = <span class="c-out">/run/secrets/wildcard.secure-platform.net.cert</span>
+<span class="c-cmd">client_tls_ca_file</span> = <span class="c-out">/run/secrets/ca.pem</span>
+<span class="c-cmd">auth_type</span> = <span class="c-out">cert</span>
+<span class="c-cmd">auth_file</span> = <span class="c-out">/run/secrets/userlist.txt</span></pre></div>
+    </div>
+
+    <ul>
+      <li><strong>Redis</strong>: Used as a cache and Pub/Sub bus for WebSockets. Accessible strictly via mTLS for the backend and WebSocket containers. Runs under UID `1010` with read-only certificate mounts.</li>
+      <li><strong>JSON2XML</strong>: An isolated Node.js microservice. Employs a native HTTPS server with mandatory client certificate validation (mTLS). The container is fully hardened (runs as non-root, read-only FS).</li>
+      <li><strong>WebSocket (Express.js + Socket.IO)</strong>: Client connections are proxied through Nginx. Upon establishing a WebSocket connection, the server validates the user session by initiating an internal HTTPS request to the backend API over an isolated overlay network.</li>
+      <li><strong>Watcher</strong>: A lightweight background monitoring service. It exposes no ports and accepts no network connections. Instead, it interacts directly with `docker.sock` and pushes cluster health alerts to Mattermost and ntfy.sh over HTTPS.</li>
+    </ul>
+  </div>
+
+  <div class="section" id="en-s6">
+    <div class="section-header"><span class="section-num">06</span><h2>Zero Trust & Defense in Depth Model</h2></div>
+    <p>System security is not built around a single perimeter. Instead, a multi-layered defense-in-depth model is implemented:</p>
+    
+    <h3>Layered Defense-in-Depth Implementation</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Security Control</th>
+          <th>Implementation Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Layer 1: Network</strong></td>
+          <td>Perimeter & Encryption</td>
+          <td>External access restricted to TLS 1.2/1.3. L4 Passthrough on the NLB. Internal data exchange is secured via mutual TLS (mTLS) with strict CA certificate validation.</td>
+        </tr>
+        <tr>
+          <td><strong>Layer 2: Containers</strong></td>
+          <td>Runtime Isolation</td>
+          <td>All images are hardened (non-root, read-only FS, tmpfs, capability drops). Secrets are injected strictly via Docker Secrets (never baked into images or environment variables).</td>
+        </tr>
+        <tr>
+          <td><strong>Layer 3: Code</strong></td>
+          <td>Logic Optimization</td>
+          <td>Laravel Octane runs in memory (no process forking). Input data is strictly validated via FormRequests. Shell command execution is banned within the application code.</td>
+        </tr>
+        <tr>
+          <td><strong>Layer 4: CA & Governance</strong></td>
+          <td>Trust Verification</td>
+          <td>Private infrastructure Certificate Authority (CA) for certificate issuance. Deep certificate chain verification (verify_depth) is enabled.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="en-s7">
+    <div class="section-header"><span class="section-num">07</span><h2>OWASP Top 10 Security Alignment</h2></div>
+    <p>OWASP Top 10 threat categories are mitigated at both the infrastructure and application levels:</p>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>OWASP Category</th>
+          <th>Mitigation Coverage (%)</th>
+          <th>Mitigation Strategy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A01: Broken Access Control</td>
+          <td>98%</td>
+          <td>Role-based access control via Laravel Policies/Middleware. Strict container isolation via Swarm overlay networks.</td>
+        </tr>
+        <tr>
+          <td>A02: Cryptographic Failures</td>
+          <td>95%</td>
+          <td>Encryption of sensitive data in the database (AES-256). Internal network mTLS. Storing keys/credentials in Docker Secrets.</td>
+        </tr>
+        <tr>
+          <td>A03: Injection</td>
+          <td>100%</td>
+          <td>Use of Eloquent ORM & Query Builder (escaped and parameterized queries). Input validation using FormRequests.</td>
+        </tr>
+        <tr>
+          <td>A04: Insecure Design</td>
+          <td>95%</td>
+          <td>Zero Trust architectural model. Tight Role-Based Access Control (RBAC).</td>
+        </tr>
+        <tr>
+          <td>A05: Security Misconfiguration</td>
+          <td>98%</td>
+          <td>Debug mode disabled in production. Automatic rollback on health check failure. A+ security headers configuration.</td>
+        </tr>
+        <tr>
+          <td>A06: Vulnerable and Outdated Components</td>
+          <td>95%</td>
+          <td>Build block on critical CVE discovery in CI (Trivy scanner). Minimizing base OS layers with Alpine.</td>
+        </tr>
+        <tr>
+          <td>A07: Identification and Authentication Failures</td>
+          <td>90%</td>
+          <td>OAuth2 token-based authentication (Laravel Passport). Rate limiting at the IP level. Login failures logged to Sentry/CloudWatch.</td>
+        </tr>
+        <tr>
+          <td>A08: Software and Data Integrity Failures</td>
+          <td>97%</td>
+          <td>Cryptographic image signatures (Cosign). Dependency lock-files, banned unstable package mirrors.</td>
+        </tr>
+        <tr>
+          <td>A09: Security Logging and Monitoring Failures</td>
+          <td>98%</td>
+          <td>Centralized log aggregation (Sentry, AWS CloudWatch, Zabbix). Real-time security alerts via Docker Swarm Watcher.</td>
+        </tr>
+        <tr>
+          <td>A10: Server-Side Request Forgery (SSRF)</td>
+          <td>100%</td>
+          <td>Strict outgoing URL filtering. Restricting container access to external networks. No SSRF endpoints in the codebase.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="author-card">
+    <img src="/stanislav.png" alt="Stanislav Kurmanov" class="author-avatar" />
+    <div>
+      <div class="author-name">Stanislav Kurmanov</div>
+      <div class="author-role">// Infrastructure Architect · DevSecOps</div>
+      <div class="author-bio">Specializes in designing resilient, high-security infrastructure solutions, implementing Zero Trust frameworks, and compiling hardened systems.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>// Infrastructure Security Specification · ZenthraCore Labs</div>
+  <div style="margin-top:8px;color:#2a3548">Reproduction permitted with attribution to the original source</div>
+</footer>
+
+</body>
+</html>
