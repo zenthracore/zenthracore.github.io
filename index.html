@@ -33,9 +33,6 @@ body{padding-top:64px;}
 
 
 /* FILTER BAR */
-.filter-section{border-bottom:1px solid var(--border);background:var(--bg2);padding:20px 0;}
-.filter-inner{max-width:1000px;margin:0 auto;padding:0 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
-.filter-title{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;}
 .filter-buttons{display:flex;gap:10px;flex-wrap:wrap;}
 .filter-btn{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;}
 .filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.05);}
@@ -85,9 +82,9 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
 .footer-links a{color:var(--text-dim);text-decoration:none;transition:color .2s;}
 .footer-links a:hover{color:var(--accent);}
 
-@media(max-width:640px){.hero{padding:80px 0 50px;}.filter-inner{flex-direction:column;align-items:flex-start;}.card{padding:24px;}}
+@media(max-width:640px){.hero{padding:80px 0 50px;}.card{padding:24px;}.top-nav-inner{flex-direction:column;gap:12px;align-items:center;}body{padding-top:110px;}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-.hero-inner,.filter-section,.card{animation:fadeUp .45s ease both;}
+.hero-inner,.card{animation:fadeUp .45s ease both;}
 .card:nth-child(1){animation-delay:.05s;}
 </style>
 </head>
@@ -100,6 +97,12 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
       <img src="/logo-nav.webp" alt="ZenthraCore" />
       <span class="nav-logo-text">Zenthra<span>Core</span></span>
     </a>
+    <div class="filter-buttons">
+      <button class="filter-btn active">All Reports</button>
+      <button class="filter-btn">Incident Response</button>
+      <button class="filter-btn">DFIR</button>
+      <button class="filter-btn">Hardening</button>
+    </div>
   </div>
 </nav>
 
@@ -107,20 +110,6 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
 <section class="hero">
   <div class="hero-inner">
     <h1 class="hero-title">Incident Response &<br><span>Security Labs</span></h1>
-
-  </div>
-</section>
-
-<!-- Filter Bar -->
-<section class="filter-section">
-  <div class="filter-inner">
-    <div class="filter-title">// Classifications</div>
-    <div class="filter-buttons">
-      <button class="filter-btn active">All Reports</button>
-      <button class="filter-btn">Incident Response</button>
-      <button class="filter-btn">DFIR</button>
-      <button class="filter-btn">Hardening</button>
-    </div>
   </div>
 </section>
 
