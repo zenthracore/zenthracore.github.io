@@ -30,18 +30,7 @@ body{padding-top:64px;}
 .hero-title span{color:var(--accent);background:linear-gradient(to right,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .hero-subtitle{font-size:19px;color:var(--text-dim);line-height:1.6;max-width:720px;margin:0 auto 40px;}
 
-.terminal-mockup{max-width:640px;margin:0 auto;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:rgba(13,17,23,.75);backdrop-filter:blur(8px);text-align:left;box-shadow:0 20px 40px rgba(0,0,0,.35);}
-.terminal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
-.terminal-dots{display:flex;gap:6px;}
-.terminal-dot{width:10px;height:10px;border-radius:50%;}
-.terminal-dot:nth-child(1){background:#ff5f57;}
-.terminal-dot:nth-child(2){background:#febc2e;}
-.terminal-dot:nth-child(3){background:#28c840;}
-.terminal-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:.05em;}
-.terminal-content{padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cdd6f4;}
-.terminal-prompt{color:#6272a4;}
-.terminal-cmd{color:#50fa7b;}
-.terminal-out{color:#8be9fd;}
+
 
 /* FILTER BAR */
 .filter-section{border-bottom:1px solid var(--border);background:var(--bg2);padding:20px 0;}
@@ -118,23 +107,7 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
 <section class="hero">
   <div class="hero-inner">
     <h1 class="hero-title">Incident Response &<br><span>Security Labs</span></h1>
-    <p class="hero-subtitle">Post-mortems, forensic investigations, and server hardening guidelines from real production environments.</p>
-    
-    <div class="terminal-mockup">
-      <div class="terminal-header">
-        <div class="terminal-dots"><div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div></div>
-        <div class="terminal-title">zenthra@security-labs:~</div>
-      </div>
-      <div class="terminal-content">
-        <span class="terminal-prompt">root@production-server:~#</span> <span class="terminal-cmd">lsmod</span><br>
-        <span class="terminal-out">Module Size Used by</span><br>
-        <span class="terminal-prompt">root@production-server:~#</span> <span class="terminal-cmd">swap-kernel --reboot</span><br>
-        <span class="terminal-out">[+] Switching kernel to grub-legacy... OK</span><br>
-        <span class="terminal-out">[+] Rebooting node... OK</span><br>
-        <span class="terminal-prompt">root@production-server:~#</span> <span class="terminal-cmd">lsmod | head -n 2</span><br>
-        <span class="terminal-out">Module              Size  Used by<br>drm_kms_helper    315392  4 bochs</span>
-      </div>
-    </div>
+
   </div>
 </section>
 
