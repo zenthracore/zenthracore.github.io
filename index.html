@@ -22,34 +22,37 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 body{padding-top:64px;}
 
 /* HERO */
-.hero{position:relative;padding:120px 0 80px;overflow:hidden;}
+.hero{position:relative;padding:100px 0 60px;overflow:hidden;}
 .hero::after{content:'';position:absolute;top:-100px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,212,255,.05) 0%,transparent 70%);pointer-events:none;}
 .hero::before{content:'';position:absolute;bottom:-100px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(168,85,247,.03) 0%,transparent 70%);pointer-events:none;}
-.hero-inner{max-width:1000px;margin:0 auto;padding:0 32px;position:relative;z-index:1;text-align:center;}
-.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(28px,5vw,56px);font-weight:900;color:var(--heading);line-height:1.15;margin-bottom:24px;letter-spacing:-.03em;}
+.hero-inner{max-width:1200px;margin:0 auto;padding:0 32px;position:relative;z-index:1;text-align:center;}
+.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(24px,4vw,48px);font-weight:900;color:var(--heading);line-height:1.15;margin-bottom:18px;letter-spacing:-.03em;}
 .hero-title span{color:var(--accent);background:linear-gradient(to right,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.hero-subtitle{font-size:19px;color:var(--text-dim);line-height:1.6;max-width:720px;margin:0 auto 40px;}
+.hero-subtitle{font-size:16px;color:var(--text-dim);line-height:1.6;max-width:720px;margin:0 auto;}
 
+/* CARD CONTAINER & COLUMNS */
+.content-section{padding:40px 0 80px;flex-grow:1;}
+.content-inner{max-width:1200px;margin:0 auto;padding:0 32px;}
+.columns-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;align-items:start;}
+@media(max-width:1024px){.columns-grid{grid-template-columns:1fr;gap:48px;}}
 
-
-/* FILTER BAR */
-.filter-buttons{display:flex;gap:10px;flex-wrap:wrap;}
-.filter-btn{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;}
-.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.05);}
-
-/* CARD CONTAINER */
-.content-section{padding:80px 0;flex-grow:1;}
-.content-inner{max-width:1000px;margin:0 auto;padding:0 32px;}
-.cards-grid{display:flex;flex-direction:column;gap:32px;}
+.column{display:flex;flex-direction:column;gap:24px;}
+.column-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:12px;letter-spacing:-.01em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.column-title span{font-family:'JetBrains Mono',monospace;color:var(--text-muted);font-size:12px;}
+.column-cards{display:flex;flex-direction:column;gap:24px;}
 
 /* CARD */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:32px;transition:all .3s ease;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:20px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all .3s ease;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:16px;}
 .card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:transparent;transition:background .3s;}
-.card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,212,255,.03);}
-.card:hover::before{background:var(--accent);}
+.card:not(.draft):hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,212,255,.03);}
+.card:not(.draft):hover::before{background:var(--accent);}
 
-.card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
-.card-meta{display:flex;align-items:center;gap:16px;}
+/* DRAFT CARD */
+.card.draft{opacity:0.45;border-style:dashed;}
+.card.draft::before{display:none;}
+
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;}
+.card-meta{display:flex;align-items:center;gap:12px;}
 .card-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);}
 .card-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);}
 
@@ -57,34 +60,38 @@ body{padding-top:64px;}
 .severity-critical{background:rgba(255,68,68,.1);color:#ff6666;border:1px solid rgba(255,68,68,.2);}
 .severity-high{background:rgba(255,153,0,.1);color:#ffa520;border:1px solid rgba(255,153,0,.2);}
 .severity-medium{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.badge-purple{background:rgba(168,85,247,.1);color:#c084fc;border:1px solid rgba(168,85,247,.25);}
+.badge-draft{background:rgba(255,255,255,.05);color:var(--text-muted);border:1px solid var(--border);}
 
 .severity-pulse{width:6px;height:6px;border-radius:50%;}
 .severity-critical .severity-pulse{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:pulse 1.5s infinite;}
 .severity-high .severity-pulse{background:var(--warn);box-shadow:0 0 6px var(--warn);}
 .severity-medium .severity-pulse{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+.badge-purple .severity-pulse{background:#a855f7;box-shadow:0 0 6px #a855f7;}
 
 @keyframes pulse{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(255,68,68,0.7);}70%{transform:scale(1);box-shadow:0 0 0 8px rgba(255,68,68,0);}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(255,68,68,0);}}
 
-.card-title{font-family:'Unbounded',sans-serif;font-size:clamp(18px,2.5vw,22px);font-weight:700;color:var(--heading);line-height:1.3;text-decoration:none;transition:color .2s;}
-.card-title:hover{color:var(--accent);}
-.card-desc{color:var(--text-dim);font-size:15px;line-height:1.6;}
+.card-title{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:700;color:var(--heading);line-height:1.35;text-decoration:none;transition:color .2s;}
+.card-title:not(.draft-title):hover{color:var(--accent);}
+.card-desc{color:var(--text-dim);font-size:13.5px;line-height:1.6;}
 
 .tag-row{display:flex;gap:8px;flex-wrap:wrap;}
-.tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;padding:3px 10px;border-radius:4px;letter-spacing:.05em;text-transform:uppercase;background:rgba(42,53,72,.4);color:var(--text-dim);border:1px solid var(--border);}
+.tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;letter-spacing:.05em;text-transform:uppercase;background:rgba(42,53,72,.4);color:var(--text-dim);border:1px solid var(--border);}
 
-.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:4px;}
 .read-link{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:gap .2s;}
 .read-link:hover{gap:10px;text-decoration:underline;}
 
 /* FOOTER */
 footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);background:var(--bg2);}
 
-
-@media(max-width:640px){.hero{padding:80px 0 50px;}.card{padding:24px;}.top-nav-inner{flex-direction:column;gap:12px;align-items:center;}body{padding-top:110px;}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-.hero-inner,.card{animation:fadeUp .45s ease both;}
-.card:nth-child(1){animation-delay:.05s;}
-.card:nth-child(2){animation-delay:.15s;}
+.hero-inner,.column{animation:fadeUp .45s ease both;}
+.column:nth-child(1){animation-delay:.05s;}
+.column:nth-child(2){animation-delay:.15s;}
+.column:nth-child(3){animation-delay:.25s;}
+
+@media(max-width:640px){.hero{padding:80px 0 40px;}.card{padding:20px;}.top-nav-inner{flex-direction:column;gap:12px;align-items:center;}body{padding-top:110px;}}
 </style>
 </head>
 <body>
@@ -96,75 +103,130 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
       <img src="/logo-nav.webp" alt="ZenthraCore" />
       <span class="nav-logo-text">Zenthra<span>Core</span></span>
     </a>
-    <div class="filter-buttons">
-      <button class="filter-btn active">All Reports</button>
-      <button class="filter-btn">Incident Response</button>
-      <button class="filter-btn">DFIR</button>
-      <button class="filter-btn">Hardening</button>
-    </div>
   </div>
 </nav>
 
 <!-- Hero Section -->
 <section class="hero">
   <div class="hero-inner">
-    <h1 class="hero-title">Incident Response &<br><span>Security Labs</span></h1>
+    <h1 class="hero-title">Infrastructure Security &<br><span>Research Labs</span></h1>
+    <p class="hero-subtitle">// Post-quantum systems, secure container orchestration, and kernel-level digital forensics</p>
   </div>
 </section>
 
-<!-- Cards List -->
+<!-- Columns List -->
 <section class="content-section">
   <div class="content-inner">
-    <div class="cards-grid">
+    <div class="columns-grid">
       
-      <!-- Card 1: Live Report -->
-      <article class="card">
-        <div class="card-header">
-          <div class="card-meta">
-            <span class="card-id">INC-2026-0505</span>
-            <span class="card-date">May 6, 2026</span>
-          </div>
-          <div class="severity-badge severity-critical">
-            <span class="severity-pulse"></span>Critical Severity
-          </div>
-        </div>
-        <a href="/incidents/kernel-compromise-brainycp-2026.html" class="card-title">When the Linux System Started Lying — Kernel Compromise Investigation</a>
-        <p class="card-desc">Investigation of a suspected kernel-level compromise in a BrainyCP production environment. Outbound DNS flood, falsified command output, empty lsmod, and swapping the kernel on a live compromised system.</p>
-        <div class="card-footer">
-          <div class="tag-row">
-            <span class="tag">Incident Response</span>
-            <span class="tag">DFIR</span>
-            <span class="tag">Linux Security</span>
-            <span class="tag">WordPress</span>
-          </div>
-          <a href="/incidents/kernel-compromise-brainycp-2026.html" class="read-link">Read Report &rarr;</a>
-        </div>
-      </article>
-    
-      <!-- Card 2: Architecture Spec -->
-      <article class="card">
-        <div class="card-header">
-          <div class="card-meta">
-            <span class="card-id">SPEC-2026-0613</span>
-            <span class="card-date">June 13, 2026</span>
-          </div>
-          <div class="severity-badge severity-medium" style="background:rgba(168,85,247,.1);color:#c084fc;border:1px solid rgba(168,85,247,.25);">
-            <span class="severity-pulse" style="background:var(--purple);box-shadow:0 0 6px var(--purple);"></span>Zero Trust Spec
-          </div>
-        </div>
-        <a href="/incidents/zero-trust-swarm-gentoo.html" class="card-title">Hardened Swarm & Gentoo: Security Architecture Specification</a>
-        <p class="card-desc">A practical guide to deploying high-security container orchestration. Strict Docker Swarm network segmentation, customized Gentoo Hardened Linux compilation, and mTLS enforcement across all communication paths.</p>
-        <div class="card-footer">
-          <div class="tag-row">
-            <span class="tag">Zero Trust</span>
-            <span class="tag">Docker Swarm</span>
-            <span class="tag">Gentoo Hardened</span>
-            <span class="tag">DevSecOps</span>
-          </div>
-          <a href="/incidents/zero-trust-swarm-gentoo.html" class="read-link">Read Specification &rarr;</a>
-        </div>
-      </article>
+      <!-- Column 1: Architecture -->
+      <div class="column">
+        <h2 class="column-title"><span>01 //</span> Architecture</h2>
+        <div class="column-cards">
+          
+          <!-- Zero Trust Swarm Card -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-meta">
+                <span class="card-id">SPEC-2026-0613</span>
+                <span class="card-date">June 13, 2026</span>
+              </div>
+              <div class="severity-badge badge-purple">
+                <span class="severity-pulse"></span>Active Spec
+              </div>
+            </div>
+            <a href="/incidents/zero-trust-swarm-gentoo.html" class="card-title">Hardened Swarm & Gentoo: Security Architecture Specification</a>
+            <p class="card-desc">A practical guide to deploying high-security container orchestration. Strict Docker Swarm network segmentation, customized Gentoo Hardened Linux compilation, and mTLS enforcement across all communication paths.</p>
+            <div class="card-footer">
+              <div class="tag-row">
+                <span class="tag">Zero Trust</span>
+                <span class="tag">Swarm</span>
+                <span class="tag">Gentoo</span>
+              </div>
+              <a href="/incidents/zero-trust-swarm-gentoo.html" class="read-link">Read Spec &rarr;</a>
+            </div>
+          </article>
 
+          <!-- mTLS Architecture Placeholder -->
+          <article class="card draft">
+            <div class="card-header">
+              <div class="card-meta">
+                <span class="card-id">SPEC-2026-0628</span>
+                <span class="card-date">Upcoming</span>
+              </div>
+              <div class="severity-badge badge-draft">Drafting</div>
+            </div>
+            <span class="card-title draft-title">Internal mTLS & Certificate Governance Model</span>
+            <p class="card-desc">Detailed blueprint for internal cluster communication using a private Certificate Authority. Path verification, rotation, and connection draining.</p>
+          </article>
+
+          <!-- PQC Gateway Placeholder -->
+          <article class="card draft">
+            <div class="card-header">
+              <div class="card-meta">
+                <span class="card-id">SPEC-2026-0715</span>
+                <span class="card-date">Planned</span>
+              </div>
+              <div class="severity-badge badge-draft">Upcoming</div>
+            </div>
+            <span class="card-title draft-title">Post-Quantum Cryptography (PQC) Gateway Integration</span>
+            <p class="card-desc">Architecture draft for transitioning public ingress and internal proxies to hybrid quantum-resistant algorithms (ML-KEM & FALCON).</p>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- Column 2: Incident Response -->
+      <div class="column">
+        <h2 class="column-title"><span>02 //</span> Incident Response</h2>
+        <div class="column-cards">
+          
+          <!-- BrainyCP Investigation Card -->
+          <article class="card">
+            <div class="card-header">
+              <div class="card-meta">
+                <span class="card-id">INC-2026-0505</span>
+                <span class="card-date">May 6, 2026</span>
+              </div>
+              <div class="severity-badge severity-critical">
+                <span class="severity-pulse"></span>Critical Severity
+              </div>
+            </div>
+            <a href="/incidents/kernel-compromise-brainycp-2026.html" class="card-title">When the Linux System Started Lying — Kernel Compromise Investigation</a>
+            <p class="card-desc">Investigation of a suspected kernel-level compromise in a BrainyCP production environment. Outbound DNS flood, falsified command output, empty lsmod, and swapping the kernel on a live compromised system.</p>
+            <div class="card-footer">
+              <div class="tag-row">
+                <span class="tag">IR</span>
+                <span class="tag">DFIR</span>
+                <span class="tag">Rootkit</span>
+              </div>
+              <a href="/incidents/kernel-compromise-brainycp-2026.html" class="read-link">Read Report &rarr;</a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- Column 3: Research -->
+      <div class="column">
+        <h2 class="column-title"><span>03 //</span> Research</h2>
+        <div class="column-cards">
+          
+          <!-- PQC Research Placeholder -->
+          <article class="card draft">
+            <div class="card-header">
+              <div class="card-meta">
+                <span class="card-id">LAB-2026-0901</span>
+                <span class="card-date">Active Lab</span>
+              </div>
+              <div class="severity-badge badge-draft">Research</div>
+            </div>
+            <span class="card-title draft-title">Performance Benchmarks of Quantum-Resistant Algorithms</span>
+            <p class="card-desc">Comparative latency and CPU overhead analysis of ML-KEM and FALCON signatures vs classical ECDSA in high-throughput containerized proxies using the OQS Provider stack.</p>
+          </article>
+
+        </div>
+      </div>
 
     </div>
   </div>
@@ -172,9 +234,8 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
 
 <!-- Footer -->
 <footer>
-  <div>// Technical Post-Mortem & Security Reports</div>
-  <div style="margin-top:8px;color:#2a3548">Reproduction welcome with attribution</div>
-
+  <div>// Technical Architecture & Incident Response Reports · ZenthraCore</div>
+  <div style="margin-top:8px;color:#2a3548">Reproduction permitted with attribution to the original source</div>
 </footer>
 
 </body>

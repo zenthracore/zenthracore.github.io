@@ -576,60 +576,60 @@ footer{border-top:1px solid var(--border);padding:40px 32px;text-align:center;fo
       <thead>
         <tr>
           <th>OWASP Category</th>
-          <th>Mitigation Coverage (%)</th>
+          <th>Mitigation Status</th>
           <th>Mitigation Strategy</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>A01: Broken Access Control</td>
-          <td>98%</td>
-          <td>Role-based access control via Laravel Policies/Middleware. Strict container isolation via Swarm overlay networks.</td>
+          <td>Mitigated</td>
+          <td>Role-based access control via Laravel Policies/Middleware. Container isolation enforced via Swarm overlay networks.</td>
         </tr>
         <tr>
           <td>A02: Cryptographic Failures</td>
-          <td>95%</td>
-          <td>Encryption of sensitive data in the database (AES-256). Internal network mTLS. Storing keys/credentials in Docker Secrets.</td>
+          <td>Mitigated</td>
+          <td>Encryption of sensitive data in transit (mTLS, TLS 1.3) and at rest (AWS RDS AES-256). Secrets injected at runtime via Docker Secrets.</td>
         </tr>
         <tr>
           <td>A03: Injection</td>
-          <td>100%</td>
-          <td>Use of Eloquent ORM & Query Builder (escaped and parameterized queries). Input validation using FormRequests.</td>
+          <td>Mitigated</td>
+          <td>Enforced use of Eloquent ORM & Query Builder (parameterized queries). Automated input validation using Laravel FormRequests.</td>
         </tr>
         <tr>
           <td>A04: Insecure Design</td>
-          <td>95%</td>
-          <td>Zero Trust architectural model. Tight Role-Based Access Control (RBAC).</td>
+          <td>Mitigated</td>
+          <td>Zero Trust architectural model implemented. Minimizing privilege and entry points at the design level. Segmented access control (RBAC).</td>
         </tr>
         <tr>
           <td>A05: Security Misconfiguration</td>
-          <td>98%</td>
-          <td>Debug mode disabled in production. Automatic rollback on health check failure. A+ security headers configuration.</td>
+          <td>Mitigated</td>
+          <td>Debug mode disabled. Automated rolling deployments with container health checks. A+ security headers configured at proxy level.</td>
         </tr>
         <tr>
           <td>A06: Vulnerable and Outdated Components</td>
-          <td>95%</td>
-          <td>Build block on critical CVE discovery in CI (Trivy scanner). Minimizing base OS layers with Alpine.</td>
+          <td>Mitigated</td>
+          <td>CI/CD build pipeline integrated with Trivy container scanner (blocks on critical CVEs). Base runtime utilizes minimal hardened images.</td>
         </tr>
         <tr>
           <td>A07: Identification and Authentication Failures</td>
-          <td>90%</td>
-          <td>OAuth2 token-based authentication (Laravel Passport). Rate limiting at the IP level. Login failures logged to Sentry/CloudWatch.</td>
+          <td>Mitigated</td>
+          <td>OAuth2 token-based authentication (Laravel Passport). Rate limiting configured at the load balancer and proxy level. Login failures monitored via centralized logs.</td>
         </tr>
         <tr>
           <td>A08: Software and Data Integrity Failures</td>
-          <td>97%</td>
-          <td>Cryptographic image signatures (Cosign). Dependency lock-files, banned unstable package mirrors.</td>
+          <td>Mitigated</td>
+          <td>Cryptographic verification of container images via Cosign. Explicit dependency pinning in project lockfiles.</td>
         </tr>
         <tr>
           <td>A09: Security Logging and Monitoring Failures</td>
-          <td>98%</td>
-          <td>Centralized log aggregation (Sentry, AWS CloudWatch, Zabbix). Real-time security alerts via Docker Swarm Watcher.</td>
+          <td>Mitigated</td>
+          <td>Centralized telemetry (AWS CloudWatch, Sentry). Operational alerts routed in real time via Docker Swarm Watcher.</td>
         </tr>
         <tr>
           <td>A10: Server-Side Request Forgery (SSRF)</td>
-          <td>100%</td>
-          <td>Strict outgoing URL filtering. Restricting container access to external networks. No SSRF endpoints in the codebase.</td>
+          <td>Mitigated</td>
+          <td>Strict outbound network isolation at the container level. Egress rules restrict traffic to allowed external APIs.</td>
         </tr>
       </tbody>
     </table>
