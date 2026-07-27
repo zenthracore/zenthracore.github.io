@@ -118,7 +118,13 @@ body{padding-top:64px;}
 .read-link:hover{gap:10px;text-decoration:underline;}
 
 /* FOOTER */
-footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);background:var(--bg2);}
+footer{border-top:1px solid var(--border);padding:40px 32px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);background:var(--bg2);}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center;}
+.footer-contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 28px;align-items:center;}
+.footer-contact-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.footer-label{color:var(--text-muted);font-weight:500;}
+.footer-contact-item a{color:var(--text-dim);text-decoration:none;transition:color .2s;}
+.footer-contact-item a:hover{color:var(--accent);text-decoration:underline;}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 .hero-inner,.column{animation:fadeUp .45s ease both;}
@@ -288,8 +294,26 @@ footer{border-top:1px solid var(--border);padding:60px 32px 40px;text-align:cent
 
 <!-- Footer -->
 <footer>
-  <div>// Technical Architecture & Incident Response Reports · ZenthraCore</div>
-  <div style="margin-top:8px;color:#2a3548">Reproduction permitted with attribution to the original source</div>
+  <div class="footer-inner">
+    <div class="footer-contacts">
+      <div class="footer-contact-item">
+        <span class="footer-label">// Email:</span>
+        <a href="mailto:stanislav.kurmanov@zenthra.eu">stanislav.kurmanov@zenthra.eu</a>
+      </div>
+      <div class="footer-contact-item">
+        <span class="footer-label">// LinkedIn:</span>
+        <a href="https://www.linkedin.com/in/thedeadbarber/" target="_blank" rel="noopener">Stanislav Kurmanov</a>
+      </div>
+      <div class="footer-contact-item">
+        <span class="footer-label">// PGP:</span>
+        <a href="/pgp-key.asc" title="Download Public PGP Key">A112 C394 64D1 7EAE 8E84 D5D8 C555 4BCC 9E0D 7A62</a>
+      </div>
+    </div>
+    <div>
+      <div>// Technical Security & Infrastructure Labs · ZenthraCore</div>
+      <div style="margin-top:6px;color:#2a3548">Reproduction permitted with attribution to the original source</div>
+    </div>
+  </div>
 </footer>
 
 </body>
