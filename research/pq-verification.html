@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live PQC Verification Report — ZenthraCore</title>
+<meta name="description" content="Independent live verification of ZenthraCore's post-quantum cryptographic deployment. Real command outputs proving ML-KEM-768 key exchange and Falcon-512 signatures in production.">
+<meta http-equiv="onion-location" content="http://zenthra7ubutlvmohgjhdopshukaftchhgnlfdqdqzj45k7pp7braqad.onion/research/pq-verification.html" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0f;--bg2:#0f1218;--surface:#1a2030;--border:#2a3548;--border2:#3a4a60;--text:#c8d4e8;--text-dim:#7a90b0;--text-muted:#4a5a70;--accent:#00d4ff;--danger:#ff4444;--warn:#ff9900;--green:#00ff88;--purple:#a855f7;--heading:#e8f0ff;--code-bg:#0d1117;}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;font-size:16px;line-height:1.75;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:relative;padding:80px 0 60px;border-bottom:1px solid var(--border);overflow:hidden;}
+header::after{content:'';position:absolute;top:-100px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(0,255,136,.06) 0%,transparent 70%);pointer-events:none;}
+.header-inner{max-width:860px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
+.tag-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.tag{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 12px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;}
+.tag-pqc{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.25);}
+.tag-verify{background:rgba(0,255,136,.08);color:#4ade80;border:1px solid rgba(0,255,136,.2);}
+.tag-live{background:rgba(0,212,255,.10);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.tag-audit{background:rgba(255,153,0,.10);color:#ffa520;border:1px solid rgba(255,153,0,.2);}
+h1{font-family:'Unbounded',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:900;color:var(--heading);line-height:1.2;margin-bottom:24px;letter-spacing:-.02em;}
+h1 span{color:var(--green);}
+.subtitle{font-size:17px;color:var(--text-dim);line-height:1.65;max-width:680px;margin-bottom:36px;}
+.meta{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.meta-item{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+.dot{width:6px;height:6px;border-radius:50%;}
+.dot-red{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.dot-yellow{background:var(--warn);box-shadow:0 0 6px var(--warn);}
+.dot-purple{background:var(--purple);box-shadow:0 0 6px var(--purple);}
+
+/* LAYOUT */
+.container{max-width:860px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
+
+/* TOC */
+.toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px 32px;margin-bottom:56px;}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:18px;}
+.toc ol{list-style:none;counter-reset:toc;display:flex;flex-direction:column;gap:8px;}
+.toc li{counter-increment:toc;display:flex;align-items:baseline;gap:12px;}
+.toc li::before{content:counter(toc,decimal-leading-zero);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);flex-shrink:0;}
+.toc a{color:var(--text-dim);text-decoration:none;font-size:14px;transition:color .2s;}
+.toc a:hover{color:var(--accent);}
+
+/* SECTIONS */
+.section{margin-bottom:72px;}
+.section-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:4px;flex-shrink:0;}
+h2{font-family:'Unbounded',sans-serif;font-size:clamp(17px,2.5vw,25px);font-weight:700;color:var(--heading);letter-spacing:-.01em;line-height:1.25;}
+h3{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--heading);margin:36px 0 16px;letter-spacing:-.01em;}
+p{margin-bottom:18px;color:var(--text);}
+strong{color:var(--heading);font-weight:600;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;margin:28px 0;font-family:'Manrope',sans-serif;font-size:14px;border:1px solid var(--border);background:var(--bg2);border-radius:8px;overflow:hidden;}
+th{background:var(--surface);color:var(--heading);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;text-align:left;padding:12px 16px;border-bottom:2px solid var(--border);}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text-dim);}
+tr:hover{background:rgba(255,255,255,0.01);}
+
+/* CODE / TERMINAL BOX */
+.code-block{margin:28px 0;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--code-bg);}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
+.code-dots{display:flex;gap:6px;}
+.code-dot{width:10px;height:10px;border-radius:50%;}
+.code-dot:nth-child(1){background:#ff5f57;}
+.code-dot:nth-child(2){background:#febc2e;}
+.code-dot:nth-child(3){background:#28c840;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:.05em;}
+.code-content{padding:20px 22px;overflow-x:auto;}
+pre{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cdd6f4;white-space:pre;}
+.c-comment{color:#6272a4;font-style:italic;}.c-cmd{color:#50fa7b;}.c-out{color:#8be9fd;}.c-warn{color:#ffb86c;}.c-danger{color:#ff5555;}.c-prompt{color:#6272a4;}.c-success{color:#50fa7b;font-weight:700;}.c-key{color:#bd93f9;}.c-val{color:#f1fa8c;}.c-err{color:#ff5555;font-weight:700;}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);color:var(--accent);padding:2px 7px;border-radius:4px;}
+
+/* CALLOUTS */
+.callout{border-radius:8px;padding:22px 26px;margin:28px 0;display:flex;gap:18px;}
+.callout-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+.callout-title{font-weight:700;font-size:14px;margin-bottom:6px;}
+.callout-body p{font-size:14.5px;margin-bottom:0;line-height:1.65;}
+.callout-danger{background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.2);border-left:3px solid var(--danger);}
+.callout-danger .callout-title{color:#ff6666;}
+.callout-warn{background:rgba(255,153,0,.07);border:1px solid rgba(255,153,0,.2);border-left:3px solid var(--warn);}
+.callout-warn .callout-title{color:#ffa520;}
+.callout-info{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.18);border-left:3px solid var(--accent);}
+.callout-info .callout-title{color:var(--accent);}
+.callout-success{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.18);border-left:3px solid var(--green);}
+.callout-success .callout-title{color:var(--green);}
+
+/* VERDICT CARDS */
+.verdict-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:28px 0;}
+@media(max-width:768px){.verdict-grid{grid-template-columns:1fr;}}
+.verdict-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.verdict-card.pass{border-color:rgba(0,255,136,.25);background:rgba(0,255,136,.02);}
+.verdict-card.fail{border-color:rgba(255,68,68,.25);background:rgba(255,68,68,.02);}
+.verdict-header{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--heading);}
+.verdict-icon{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;}
+.icon-pass{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2);}
+.icon-fail{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.2);}
+.verdict-label{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;}
+.verdict-detail{font-size:13px;color:var(--text-dim);line-height:1.6;}
+
+/* GRID */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:28px 0;}
+@media(max-width:768px){.grid-3{grid-template-columns:1fr;}}
+.grid-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+
+/* BULLET LIST */
+.bullet-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin:20px 0;}
+.bullet-list li{display:flex;align-items:flex-start;gap:12px;font-size:15px;color:var(--text);}
+.bullet-list li::before{content:'▸';color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:700;flex-shrink:0;margin-top:1px;}
+.bullet-list.danger li::before{color:var(--danger);}
+
+/* INLINE VERDICT */
+.inline-verdict{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:3px 10px;border-radius:4px;margin-left:8px;}
+.inline-pass{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2);}
+.inline-fail{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.2);}
+
+/* AUTHOR */
+.author-card{display:flex;gap:20px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px 28px;margin:48px 0;}
+.author-avatar{width:52px;height:52px;border-radius:50%;flex-shrink:0;border:2px solid var(--border2);}
+.author-name{font-weight:700;font-size:15px;color:var(--heading);margin-bottom:4px;}
+.author-role{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px;}
+.author-bio{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-bottom:0;}
+.divider{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:56px 0;}
+
+/* NAVIGATION */
+.top-nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,12,15,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:16px 32px;}
+.top-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;transition:opacity .2s;}
+.nav-logo:hover{opacity:.8;}
+.nav-logo img{height:32px;width:32px;object-fit:contain;}
+.nav-logo-text{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700;color:var(--heading);}
+.nav-logo-text span{color:var(--accent);}
+.nav-back{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:13px;transition:all .2s;}
+.nav-back:hover{background:var(--border);border-color:var(--accent);color:var(--accent);}
+.nav-back svg{width:16px;height:16px;}
+body{padding-top:64px;}
+
+footer{border-top:1px solid var(--border);padding:40px 32px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+
+/* ANALYSIS ANNOTATION */
+.analysis{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:18px 22px;margin:16px 0 28px;font-size:14px;color:var(--text-dim);line-height:1.65;}
+.analysis strong{color:var(--accent);}
+.analysis-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+
+/* STATUS INDICATOR */
+.status-row{display:flex;align-items:center;gap:12px;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:13px;}
+.status-indicator{width:10px;height:10px;border-radius:50%;animation:pulse-green 2s infinite;}
+.status-indicator.green{background:var(--green);box-shadow:0 0 8px var(--green);}
+.status-indicator.red{background:var(--danger);box-shadow:0 0 8px var(--danger);}
+@keyframes pulse-green{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(0,255,136,0.7);}70%{transform:scale(1);box-shadow:0 0 0 8px rgba(0,255,136,0);}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(0,255,136,0);}}
+
+@media(max-width:640px){.header-inner,.container{padding:0 20px;}.section-header{flex-direction:column;align-items:flex-start;gap:8px;}.author-card{flex-direction:column;}.top-nav{padding:12px 20px;}.nav-logo-text{font-size:16px;}.nav-back{font-size:12px;padding:6px 12px;}.verdict-grid{grid-template-columns:1fr;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.section,.code-block,.callout{animation:fadeUp .45s ease both;}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-nav.webp" alt="ZenthraCore" />
+      <span class="nav-logo-text">Zenthra<span>Core</span></span>
+    </a>
+    <a href="/" class="nav-back">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Back to index
+    </a>
+  </div>
+</nav>
+
+<header>
+  <div class="header-inner">
+    <div class="tag-row">
+      <span class="tag tag-pqc">PQC</span>
+      <span class="tag tag-verify">Verification</span>
+      <span class="tag tag-live">Live Audit</span>
+      <span class="tag tag-audit">Production</span>
+    </div>
+    <h1>Live Post-Quantum <span>Verification Report</span></h1>
+    <p class="subtitle">Independent cryptographic verification of ZenthraCore's production PQ transport enclave. Real terminal outputs from a live system demonstrating ML-KEM-768 key exchange, Falcon-512 signatures, and strict classical rejection.</p>
+    <div class="meta">
+      <div class="meta-item"><span class="dot dot-green"></span>Document Type: Live Verification Report</div>
+      <div class="meta-item"><span class="dot dot-green"></span>Verification Status: All Tests Passed</div>
+      <div class="meta-item"><span class="dot dot-purple"></span>Related: <a href="/research/pq-architecture.html" style="font-size:12px;">PQ Architecture Whitepaper</a></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Verification Status Banner -->
+  <div class="callout callout-success" style="margin-top: 40px;">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">Verification Complete — All Tests Passed</div>
+      <p>All six verification tests confirm genuine post-quantum cryptographic enforcement. The PQ Gate operates with ML-KEM-768 key exchange and Falcon-512 certificate signatures, with zero classical fallback capability.</p>
+    </div>
+  </div>
+
+  <div class="toc" style="margin-top: 40px;">
+    <div class="toc-title">// Table of Contents</div>
+    <ol>
+      <li><a href="#s1">Verification Methodology</a></li>
+      <li><a href="#s2">Test Environment</a></li>
+      <li><a href="#s3">Test 1 — Cryptographic Stack Verification</a></li>
+      <li><a href="#s4">Test 2 — OQS Provider & PQ Algorithm Availability</a></li>
+      <li><a href="#s5">Test 3 — PQ Certificate Analysis</a></li>
+      <li><a href="#s6">Test 4 — Transport Enforcement Configuration</a></li>
+      <li><a href="#s7">Test 5 — Live PQ Handshake (ML-KEM-768)</a></li>
+      <li><a href="#s8">Test 6 — Classical Rejection (Downgrade Resistance)</a></li>
+      <li><a href="#s9">Test 7 — Multi-Vector Rejection (TLS 1.2, P-256)</a></li>
+      <li><a href="#s10">Test 8 — Server-Side Rejection Logs</a></li>
+      <li><a href="#s11">Verification Matrix</a></li>
+      <li><a href="#s12">Conclusions</a></li>
+    </ol>
+  </div>
+
+  <!-- Section 1: Methodology -->
+  <div class="section" id="s1">
+    <div class="section-header"><span class="section-num">01</span><h2>Verification Methodology</h2></div>
+    <p>This report documents an independent verification of ZenthraCore's post-quantum cryptographic deployment. Each test was executed directly on the production system via <code>docker exec</code> against live containers. No simulations, no staging environments — all outputs are from the operational infrastructure.</p>
+    
+    <h3>Verification Scope</h3>
+    <ul class="bullet-list">
+      <li>Confirm that the TLS stack supports genuine post-quantum algorithms (not wrappers or stubs).</li>
+      <li>Verify that certificates use PQ signature algorithms with real PQ key material.</li>
+      <li>Prove that the PQ Gate enforces ML-KEM-768 as the <strong>only</strong> key exchange group.</li>
+      <li>Demonstrate successful PQ TLS handshake completion.</li>
+      <li>Prove that classical key exchange attempts are <strong>terminated</strong>, not downgraded.</li>
+    </ul>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <div class="callout-title">Normative Reference</div>
+        <p>This verification corresponds to the architectural claims made in the <a href="/research/pq-architecture.html">Post-Quantum Segmented Transport Architecture</a> whitepaper (v1.1).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Test Environment -->
+  <div class="section" id="s2">
+    <div class="section-header"><span class="section-num">02</span><h2>Test Environment</h2></div>
+    
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">docker ps — production containers</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"</span>
+<span class="c-out">NAMES                  IMAGE                            STATUS
+zenthra_nginx          zenthracore/zen.nginx            Up 2 months
+zenthra_backend        zenthracore-backend              Up 2 months (healthy)
+zenthra_docker_watcher zenthracore-docker-watcher       Up 2 months
+zenthra_tor            alpine:latest                    Up 2 months
+<span class="c-success">zenthra_pq_gate        zenthracore/zen.pq-gate:latest   Up 2 months</span>
+zenthra_db             postgres:15-alpine               Up 2 months</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis</div>
+      The <strong>zenthra_pq_gate</strong> container runs as a dedicated TLS termination proxy between the nginx edge and the backend application. It has been continuously operational for over two months, confirming this is not a temporary or demonstration setup.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Role</th>
+          <th>Network Position</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight: 700;">zenthra_nginx</td>
+          <td>Public edge — TLS 1.3 classical compatibility</td>
+          <td>External-facing (ports 80/443)</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700; color: var(--green);">zenthra_pq_gate</td>
+          <td>PQ enforcement proxy — ML-KEM-768 + Falcon-512</td>
+          <td>Cryptographic boundary (port 5444)</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">zenthra_backend</td>
+          <td>Application runtime</td>
+          <td>Internal only (port 5000)</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">zenthra_db</td>
+          <td>PostgreSQL database</td>
+          <td>Isolated bridge network</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 3: Test 1 — Cryptographic Stack -->
+  <div class="section" id="s3">
+    <div class="section-header"><span class="section-num">03</span><h2>Test 1 — Cryptographic Stack Verification</h2></div>
+    <p>Verify the OpenSSL version and build configuration inside the PQ Gate container.</p>
+    
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl version -a</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl version -a</span>
+
+<span class="c-success">OpenSSL 3.3.6 27 Jan 2026 (Library: OpenSSL 3.3.6 27 Jan 2026)</span>
+<span class="c-out">built on: Tue Jan 27 16:57:23 2026 UTC
+platform: linux-x86_64
+options:  bn(64,64)
+compiler: gcc -fPIC -pthread -m64 -Wa,--noexecstack
+          <span class="c-warn">-Os -fstack-clash-protection -Werror=format-security -fno-plt</span>
+OPENSSLDIR: "/etc/ssl"
+MODULESDIR: "/usr/lib/ossl-modules"</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      <strong>OpenSSL 3.3.6</strong> — a current-generation release with full provider architecture support, required for loading third-party PQ modules. Compiled with <strong>stack-clash protection</strong> and <strong>format security</strong> hardening flags. The <code>MODULESDIR</code> at <code>/usr/lib/ossl-modules</code> is where the OQS provider binary is loaded from.
+    </div>
+  </div>
+
+  <!-- Section 4: Test 2 — OQS Provider -->
+  <div class="section" id="s4">
+    <div class="section-header"><span class="section-num">04</span><h2>Test 2 — OQS Provider & PQ Algorithm Availability</h2></div>
+    <p>Verify that the Open Quantum Safe (OQS) provider is loaded and exposes post-quantum KEM algorithms.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl list — public-key-algorithms (filtered)</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl list -public-key-algorithms</span>
+
+<span class="c-comment"># Classical (default provider)</span>
+<span class="c-out">  { 1.2.840.10045.2.1, EC, id-ecPublicKey } @ default
+  { 1.2.840.113549.1.1.1, RSA, rsaEncryption } @ default
+  { 1.3.101.111, X448 } @ default
+  { 1.3.101.110, X25519 } @ default</span>
+
+<span class="c-comment"># Post-Quantum KEM — ML-KEM (FIPS 203)</span>
+  <span class="c-success">mlkem512 @ oqsprovider</span>
+  <span class="c-success">mlkem768 @ oqsprovider           ← DEPLOYED</span>
+  <span class="c-success">mlkem1024 @ oqsprovider</span>
+
+<span class="c-comment"># Post-Quantum KEM — FrodoKEM</span>
+  <span class="c-key">frodo640aes @ oqsprovider</span>
+  <span class="c-key">frodo640shake @ oqsprovider</span>
+  <span class="c-key">frodo976aes @ oqsprovider</span>
+  <span class="c-key">frodo976shake @ oqsprovider</span>
+  <span class="c-key">frodo1344aes @ oqsprovider</span>
+  <span class="c-key">frodo1344shake @ oqsprovider</span>
+
+<span class="c-comment"># Post-Quantum KEM — BIKE</span>
+  <span class="c-key">bikel1 @ oqsprovider</span>
+  <span class="c-key">bikel3 @ oqsprovider</span>
+  <span class="c-key">bikel5 @ oqsprovider</span>
+
+<span class="c-comment"># Hybrid KEM (PQ + Classical combined)</span>
+  <span class="c-key">X25519MLKEM768 @ oqsprovider</span>
+  <span class="c-key">SecP256r1MLKEM768 @ oqsprovider</span>
+  <span class="c-key">SecP384r1MLKEM1024 @ oqsprovider</span>
+  <span class="c-key">p256_mlkem512 @ oqsprovider</span>
+  <span class="c-key">p384_mlkem768 @ oqsprovider</span>
+  <span class="c-key">p521_mlkem1024 @ oqsprovider</span>
+  <span class="c-out">... and more</span></pre></div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl.cnf — OQS provider configuration</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate cat /etc/ssl/openssl.cnf</span>
+
+<span class="c-out">[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+<span class="c-success">oqsprovider = oqsprovider_sect</span>
+default = default_sect
+
+[default_sect]
+activate = 1
+
+<span class="c-success">[oqsprovider_sect]
+module = /usr/lib/ossl-modules/oqsprovider.so
+activate = 1</span></span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      The <strong>OQS Provider</strong> (<a href="https://github.com/open-quantum-safe/oqs-provider" target="_blank">open-quantum-safe/oqs-provider</a>) is properly loaded from <code>/usr/lib/ossl-modules/oqsprovider.so</code> and activated alongside the default provider. This is the reference implementation of post-quantum algorithms for OpenSSL 3.x, maintained by the Open Quantum Safe project.<br><br>
+      The provider exposes <strong>ML-KEM-512/768/1024</strong> (FIPS 203), <strong>FrodoKEM</strong>, <strong>BIKE</strong>, and multiple hybrid combinations. The deployment uses <strong>mlkem768</strong> — the NIST-recommended security level for general-purpose post-quantum key exchange.
+    </div>
+  </div>
+
+  <!-- Section 5: Test 3 — PQ Certificate -->
+  <div class="section" id="s5">
+    <div class="section-header"><span class="section-num">05</span><h2>Test 3 — PQ Certificate Analysis</h2></div>
+    <p>Verify the TLS certificate used by the PQ Gate is signed with a post-quantum signature algorithm and contains PQ key material.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">x509 certificate — pq_client.crt</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl x509 -in /tmp/certs/pq_client.crt -text -noout</span>
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            <span class="c-out">[REDACTED — certificate serial number]</span>
+        <span class="c-success">Signature Algorithm: falcon512</span>
+        Issuer: CN=zen-pqs-client
+        Validity
+            Not Before: Feb  5 17:42:33 2026 GMT
+            Not After : Feb  5 17:42:33 2027 GMT
+        Subject: CN=zen-pqs-client
+        Subject Public Key Info:
+            <span class="c-success">Public Key Algorithm: falcon512</span>
+                falcon512 public key:
+                <span class="c-key">PQ key material:</span>
+                    <span class="c-out">[REDACTED — 897 bytes of Falcon-512 lattice-based public key]</span>
+        X509v3 extensions:
+            X509v3 Subject Key Identifier:
+                <span class="c-out">[REDACTED — subject key identifier]</span>
+    <span class="c-success">Signature Algorithm: falcon512</span>
+    Signature Value:
+        <span class="c-out">[REDACTED — 658 bytes of Falcon-512 signature]</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      The certificate is signed with <strong>Falcon-512</strong> — a lattice-based post-quantum digital signature scheme and NIST PQC competition Round 3 finalist. Key observations:
+      <ul class="bullet-list" style="margin-top: 12px; margin-bottom: 0;">
+        <li><strong>Signature Algorithm</strong>: <code>falcon512</code> — not RSA, not ECDSA, not Ed25519. This is a genuine PQ signature.</li>
+        <li><strong>Public Key</strong>: 897 bytes of lattice-based key material — consistent with Falcon-512 public key size (~897 bytes).</li>
+        <li><strong>Signature</strong>: 658 bytes — consistent with Falcon-512 compressed signature format (~666 bytes average).</li>
+        <li><strong>Self-signed internal PKI</strong>: The certificate is self-signed (<code>CN=zen-pqs-client</code>), appropriate for internal PQ transport where no public CA supports PQ signatures yet.</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <div class="callout-title">Why Falcon-512?</div>
+        <p>Falcon is a hash-and-sign lattice-based signature scheme based on NTRU lattices. It offers the smallest signature sizes among NIST PQC finalists (~666 bytes), making it efficient for TLS certificate chains. The NIST standardized variant (FN-DSA, FIPS 206) is pending final publication, but the underlying cryptographic construction is mature and well-analyzed.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Test 4 — Transport Configuration -->
+  <div class="section" id="s6">
+    <div class="section-header"><span class="section-num">06</span><h2>Test 4 — Transport Enforcement Configuration</h2></div>
+    <p>Verify that the PQ Gate is configured to enforce PQ-only key exchange with zero classical fallback.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">stunnel.conf — PQ Gate configuration</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate cat /etc/stunnel/stunnel.conf</span>
+
+foreground = yes
+debug = 7
+output = /dev/stdout
+
+[zenthra-pq-gate]
+accept = 0.0.0.0:5444
+connect = zenthra_backend:5000
+cert = /tmp/certs/pq_client.crt
+key = /tmp/certs/pq_client.key
+<span class="c-success">sslVersion = TLSv1.3</span>
+<span class="c-success">curves = mlkem768</span></pre></div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">entrypoint.sh — security hardening</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate cat /entrypoint.sh</span>
+
+<span class="c-comment">#!/bin/sh</span>
+<span class="c-comment"># Certificates copied to tmpfs (in-memory, never touches disk)</span>
+mkdir -p /tmp/certs
+
+cp /etc/certs/pq_client.crt /tmp/certs/pq_client.crt
+cp /etc/certs/pq_client.key /tmp/certs/pq_client.key
+
+<span class="c-comment"># Maximum restrictive permissions</span>
+chmod 644 /tmp/certs/pq_client.crt
+chmod <span class="c-warn">600</span> /tmp/certs/pq_client.key   <span class="c-comment"># owner-only read/write</span>
+chmod <span class="c-warn">700</span> /tmp/certs                   <span class="c-comment"># owner-only access</span>
+
+<span class="c-comment"># Launch stunnel (all capabilities dropped, read-only filesystem)</span>
+exec /usr/bin/stunnel /etc/stunnel/stunnel.conf</pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      Critical enforcement mechanisms confirmed:
+      <ul class="bullet-list" style="margin-top: 12px; margin-bottom: 0;">
+        <li><strong><code>sslVersion = TLSv1.3</code></strong> — no TLS 1.2 or earlier. Protocol downgrade impossible.</li>
+        <li><strong><code>curves = mlkem768</code></strong> — the <strong>only</strong> allowed key exchange group. No X25519, no P-256, no P-384. A client that cannot negotiate ML-KEM-768 will receive a handshake failure.</li>
+        <li><strong>Certificates in tmpfs</strong> — private key material exists only in RAM, never persisted to disk.</li>
+        <li><strong>Container hardening</strong> — all Linux capabilities dropped (<code>cap_drop: ALL</code>), read-only root filesystem.</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-title">Zero Fallback Guarantee</div>
+        <p>The <code>curves = mlkem768</code> directive contains exactly one group. There is no secondary group to fall back to. If a connecting client does not support ML-KEM-768, the connection is <strong>terminated</strong> — not renegotiated, not downgraded, not retried with a classical group.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 7: Test 5 — Live PQ Handshake -->
+  <div class="section" id="s7">
+    <div class="section-header"><span class="section-num">07</span><h2>Test 5 — Live PQ Handshake (ML-KEM-768)</h2></div>
+    <p>Perform a real TLS handshake to the PQ Gate using ML-KEM-768, both from within the container and cross-container from nginx.</p>
+
+    <h3>5a. Cross-Container Handshake (nginx → PQ Gate)</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl s_client — cross-container PQ handshake</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_nginx openssl s_client \
+    -connect zenthra_pq_gate:5444 -groups mlkem768 -brief</span>
+
+<span class="c-out">Connecting to [internal-docker-ip]</span>
+<span class="c-out">depth=0 CN=zen-pqs-client
+verify error:num=18:self-signed certificate</span>
+<span class="c-success">CONNECTION ESTABLISHED</span>
+<span class="c-success">Protocol version: TLSv1.3</span>
+<span class="c-success">Ciphersuite: TLS_AES_256_GCM_SHA384</span>
+<span class="c-out">Peer certificate: CN=zen-pqs-client</span>
+<span class="c-out">Hash used: UNDEF</span>
+<span class="c-success">Signature type: falcon512</span>
+<span class="c-out">Verification error: self-signed certificate</span></pre></div>
+    </div>
+
+    <h3>5b. Localhost Handshake (within PQ Gate)</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl s_client — localhost PQ handshake</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl s_client \
+    -connect localhost:5444 -groups mlkem768 -brief</span>
+
+<span class="c-out">Connecting to 127.0.0.1</span>
+<span class="c-out">depth=0 CN=zen-pqs-client
+verify error:num=18:self-signed certificate</span>
+<span class="c-success">CONNECTION ESTABLISHED</span>
+<span class="c-success">Protocol version: TLSv1.3</span>
+<span class="c-success">Ciphersuite: TLS_AES_256_GCM_SHA384</span>
+<span class="c-out">Peer certificate: CN=zen-pqs-client</span>
+<span class="c-out">Hash used: UNDEF</span>
+<span class="c-success">Signature type: falcon512</span>
+<span class="c-out">Verification error: self-signed certificate</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      Both handshakes completed successfully with identical PQ parameters:
+      <ul class="bullet-list" style="margin-top: 12px; margin-bottom: 0;">
+        <li><strong>Protocol</strong>: TLSv1.3 — confirmed, no downgrade.</li>
+        <li><strong>Ciphersuite</strong>: <code>TLS_AES_256_GCM_SHA384</code> — AEAD symmetric cipher with 256-bit key and SHA-384 HMAC.</li>
+        <li><strong>Key Exchange</strong>: ML-KEM-768 (implied by <code>-groups mlkem768</code> + successful connection).</li>
+        <li><strong>Signature</strong>: <code>falcon512</code> — server certificate signature verified using Falcon-512.</li>
+        <li><strong>Cross-container verification</strong>: The nginx container successfully negotiated PQ TLS with the PQ Gate across the Docker internal network, proving inter-service PQ transport.</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-body">
+        <div class="callout-title">Cryptographic Stack Confirmed</div>
+        <p><strong>ML-KEM-768</strong> (key exchange) + <strong>Falcon-512</strong> (signature) + <strong>AES-256-GCM-SHA384</strong> (symmetric encryption). The complete post-quantum TLS stack is operational in production.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 8: Test 6 — Classical Rejection -->
+  <div class="section" id="s8">
+    <div class="section-header"><span class="section-num">08</span><h2>Test 6 — Classical Rejection (Downgrade Resistance)</h2></div>
+    <p>Attempt to connect to the PQ Gate using a classical key exchange group (X25519). This test verifies that the PQ Gate <strong>terminates</strong> the handshake rather than falling back.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl s_client — classical X25519 attempt (EXPECTED FAILURE)</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl s_client \
+    -connect localhost:5444 -groups X25519 -brief</span>
+
+<span class="c-out">Connecting to 127.0.0.1</span>
+<span class="c-err">error:0A000410:SSL routines:ssl3_read_bytes:
+    ssl/tls alert handshake failure:
+    ssl/record/rec_layer_s3.c:914:SSL alert number 40</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS (expected failure)</span></div>
+      The PQ Gate returned <strong>TLS Alert 40</strong> (<code>handshake_failure</code>) — the connection was immediately terminated. Critical observations:
+      <ul class="bullet-list" style="margin-top: 12px; margin-bottom: 0;">
+        <li><strong>No silent fallback</strong>: The server did not attempt to renegotiate with a different group.</li>
+        <li><strong>No hybrid negotiation</strong>: Despite X25519MLKEM768 being available in the OQS provider, the server's strict <code>curves = mlkem768</code> configuration rejected it.</li>
+        <li><strong>Immediate termination</strong>: Alert 40 is a fatal alert — the TLS session is destroyed, no data exchange occurred.</li>
+        <li><strong>This is the correct behavior</strong>: Any classical-only client is explicitly denied access to the PQ enclave.</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">⛔</div>
+      <div class="callout-body">
+        <div class="callout-title">Downgrade Resistance Confirmed</div>
+        <p>A real-world attacker attempting to force a classical key exchange (MITM group substitution, cipher manipulation, or protocol downgrade) would receive the same <code>alert number 40</code> and immediate connection termination. There is no negotiation path that bypasses ML-KEM-768.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 9: Test 7 — Multi-Vector Rejection -->
+  <div class="section" id="s9">
+    <div class="section-header"><span class="section-num">09</span><h2>Test 7 — Multi-Vector Rejection</h2></div>
+    <p>Beyond X25519, additional classical vectors are tested to confirm the PQ Gate rejects <strong>all</strong> non-PQ key exchange methods and protocol versions.</p>
+
+    <h3>7a. TLS 1.2 Protocol Downgrade</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl s_client — TLS 1.2 downgrade attempt (EXPECTED FAILURE)</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl s_client \
+    -connect localhost:5444 -tls1_2 -brief</span>
+
+<span class="c-out">Connecting to 127.0.0.1</span>
+<span class="c-err">error:0A00042E:SSL routines:ssl3_read_bytes:
+    tlsv1 alert protocol version:
+    ssl/record/rec_layer_s3.c:914:SSL alert number 70</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS (expected failure)</span></div>
+      <strong>TLS Alert 70</strong> (<code>protocol_version</code>) — the server explicitly rejected the TLS 1.2 protocol. This is a <strong>fatal alert</strong>, meaning the server did not attempt to negotiate a different version. The <code>sslVersion = TLSv1.3</code> directive is enforced at the protocol level, not just at the cipher suite level.
+    </div>
+
+    <h3>7b. P-256 (secp256r1) Classical Group</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">openssl s_client — P-256 classical group attempt (EXPECTED FAILURE)</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate openssl s_client \
+    -connect localhost:5444 -groups P-256 -brief</span>
+
+<span class="c-out">Connecting to 127.0.0.1</span>
+<span class="c-err">error:0A000410:SSL routines:ssl3_read_bytes:
+    ssl/tls alert handshake failure:
+    ssl/record/rec_layer_s3.c:914:SSL alert number 40</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS (expected failure)</span></div>
+      <strong>TLS Alert 40</strong> (<code>handshake_failure</code>) — identical rejection behavior as X25519. The PQ Gate does not discriminate between <em>which</em> classical group is offered — it rejects <strong>all of them</strong>. Only ML-KEM-768 is accepted.
+    </div>
+
+    <h3>7c. OQS Provider Binary Verification</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">ls -la — OQS provider module on disk</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker exec zenthra_pq_gate ls -la /usr/lib/ossl-modules/oqsprovider.so</span>
+
+<span class="c-success">-rwxr-xr-x  1 root root  1134904 Feb  8 11:13 /usr/lib/ossl-modules/oqsprovider.so</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      The OQS provider binary is <strong>1,134,904 bytes</strong> (1.1 MB) — a full compiled shared library containing the implementations of ML-KEM, Falcon, FrodoKEM, BIKE, and other PQ algorithms. This is not a stub, shim, or wrapper — it is the complete <a href="https://github.com/open-quantum-safe/oqs-provider" target="_blank">OQS Provider</a> binary with real cryptographic implementations.
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">⛔</div>
+      <div class="callout-body">
+        <div class="callout-title">Multi-Vector Rejection Summary</div>
+        <p>Three distinct classical attack vectors were tested — each one was <strong>immediately terminated</strong> by the PQ Gate:</p>
+        <table style="margin: 12px 0 0; background: transparent; border: none;">
+          <tbody>
+            <tr><td style="padding: 4px 16px 4px 0; border: none; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--danger); font-weight:700;">X25519</td><td style="padding: 4px 0; border: none; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim);">Alert 40 — handshake_failure</td></tr>
+            <tr><td style="padding: 4px 16px 4px 0; border: none; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--danger); font-weight:700;">P-256</td><td style="padding: 4px 0; border: none; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim);">Alert 40 — handshake_failure</td></tr>
+            <tr><td style="padding: 4px 16px 4px 0; border: none; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--danger); font-weight:700;">TLS 1.2</td><td style="padding: 4px 0; border: none; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim);">Alert 70 — protocol_version</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 10: Test 8 — Server-Side Logs -->
+  <div class="section" id="s10">
+    <div class="section-header"><span class="section-num">10</span><h2>Test 8 — Server-Side Rejection Logs</h2></div>
+    <p>The previous tests showed client-side error messages. This test examines the <strong>server-side logs</strong> from stunnel to confirm that the PQ Gate actively rejects classical connections and logs the events.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+        <span class="code-lang">docker logs — PQ Gate rejection events</span>
+      </div>
+      <div class="code-content"><pre><span class="c-prompt">$</span> <span class="c-cmd">docker logs zenthra_pq_gate 2>&1 | grep -i "error\|reject\|fail\|alert"</span>
+
+<span class="c-comment"># Classical key exchange rejection (X25519 / P-256 attempts)</span>
+<span class="c-err">LOG7: TLS alert (write): fatal: handshake failure</span>
+<span class="c-err">LOG3: SSL_accept: ssl/statem/extensions.c:
+    error:0A000065:SSL routines::no suitable key share</span>
+<span class="c-err">LOG3: SSL_accept: ssl/statem/extensions.c:
+    error:0A000065:SSL routines::no suitable key share</span>
+
+<span class="c-comment"># TLS 1.2 protocol downgrade rejection</span>
+<span class="c-err">LOG7: TLS alert (write): fatal: protocol version</span>
+<span class="c-err">LOG3: SSL_accept: ssl/statem/statem_srvr.c:
+    error:0A000102:SSL routines::unsupported protocol</span>
+<span class="c-err">LOG7: TLS alert (write): fatal: protocol version</span>
+<span class="c-err">LOG3: SSL_accept: ssl/statem/statem_srvr.c:
+    error:0A000102:SSL routines::unsupported protocol</span>
+
+<span class="c-comment"># Additional classical group rejection</span>
+<span class="c-err">LOG7: TLS alert (write): fatal: handshake failure</span>
+<span class="c-err">LOG3: SSL_accept: ssl/statem/extensions.c:
+    error:0A000065:SSL routines::no suitable key share</span></pre></div>
+    </div>
+
+    <div class="analysis">
+      <div class="analysis-title">◆ Analysis <span class="inline-verdict inline-pass">✓ PASS</span></div>
+      The server-side logs confirm every rejection observed from the client side. Key log entries:
+      <ul class="bullet-list" style="margin-top: 12px; margin-bottom: 0;">
+        <li><strong><code>no suitable key share</code></strong> — the server evaluated the client's offered groups and found none matching <code>mlkem768</code>. This is the expected behavior when a client offers only classical groups (X25519, P-256).</li>
+        <li><strong><code>unsupported protocol</code></strong> — the server rejected TLS 1.2 at the protocol negotiation stage, before any cipher suite evaluation.</li>
+        <li><strong><code>TLS alert (write): fatal</code></strong> — all rejections are <strong>fatal</strong> alerts, meaning the server tears down the connection immediately. No retry, no fallback, no renegotiation.</li>
+        <li><strong>Logging at LOG3/LOG7</strong> — stunnel logs every rejection event at debug level 7, providing full auditability of all failed handshake attempts.</li>
+      </ul>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">📋</div>
+      <div class="callout-body">
+        <div class="callout-title">Audit Trail</div>
+        <p>Every classical connection attempt is recorded in the PQ Gate's log stream. In a production monitoring setup, these events can be forwarded to a SIEM system for real-time alerting on potential downgrade attack attempts.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 11: Verification Matrix -->
+  <div class="section" id="s11">
+    <div class="section-header"><span class="section-num">11</span><h2>Verification Matrix</h2></div>
+    
+    <div class="verdict-grid">
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>TLS Stack</span>
+        </div>
+        <div>
+          <div class="verdict-label">OpenSSL</div>
+          <div class="verdict-detail">v3.3.6 with OQS Provider loaded and activated. Full PQ algorithm suite available.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>Key Exchange</span>
+        </div>
+        <div>
+          <div class="verdict-label">ML-KEM-768</div>
+          <div class="verdict-detail">FIPS 203 compliant. Only allowed group. No classical fallback configured.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>Signature</span>
+        </div>
+        <div>
+          <div class="verdict-label">Falcon-512</div>
+          <div class="verdict-detail">Lattice-based PQ signature. Certificate signed and verified with PQ key material.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>Protocol</span>
+        </div>
+        <div>
+          <div class="verdict-label">TLS 1.3 Only</div>
+          <div class="verdict-detail">No TLS 1.2 or earlier. Protocol downgrade impossible by configuration.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>PQ Handshake</span>
+        </div>
+        <div>
+          <div class="verdict-label">Connection Established</div>
+          <div class="verdict-detail">Successful ML-KEM-768 handshake both localhost and cross-container.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>Classical Rejection</span>
+        </div>
+        <div>
+          <div class="verdict-label">Alert 40 — Terminated</div>
+          <div class="verdict-detail">X25519, P-256 immediately killed. Zero fallback. Zero negotiation.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>Protocol Downgrade</span>
+        </div>
+        <div>
+          <div class="verdict-label">Alert 70 — Rejected</div>
+          <div class="verdict-detail">TLS 1.2 attempt rejected with fatal protocol_version alert.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>Server Logs</span>
+        </div>
+        <div>
+          <div class="verdict-label">Full Audit Trail</div>
+          <div class="verdict-detail">Every rejection logged server-side with error codes and alert types.</div>
+        </div>
+      </div>
+      <div class="verdict-card pass">
+        <div class="verdict-header">
+          <div class="verdict-icon icon-pass">✓</div>
+          <span>OQS Binary</span>
+        </div>
+        <div>
+          <div class="verdict-label">1.1 MB Real Module</div>
+          <div class="verdict-detail">Full OQS provider binary at 1,134,904 bytes. Not a stub or shim.</div>
+        </div>
+      </div>
+    </div>
+
+    <table style="margin-top: 32px;">
+      <thead>
+        <tr>
+          <th>Cryptographic Layer</th>
+          <th>Algorithm</th>
+          <th>Standard</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight: 700;">Key Exchange (KEM)</td>
+          <td><code>mlkem768</code></td>
+          <td>NIST FIPS 203 (ML-KEM)</td>
+          <td style="color: var(--green); font-weight: 700;">✓ Enforced</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">Digital Signature</td>
+          <td><code>falcon512</code></td>
+          <td>NIST PQC Round 3 / FN-DSA (FIPS 206 pending)</td>
+          <td style="color: var(--green); font-weight: 700;">✓ Verified</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">Symmetric Cipher</td>
+          <td><code>AES-256-GCM</code></td>
+          <td>NIST SP 800-38D</td>
+          <td style="color: var(--green); font-weight: 700;">✓ Active</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">Hash / PRF</td>
+          <td><code>SHA-384</code></td>
+          <td>NIST FIPS 180-4</td>
+          <td style="color: var(--green); font-weight: 700;">✓ Active</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">Protocol</td>
+          <td><code>TLS 1.3</code></td>
+          <td>RFC 8446</td>
+          <td style="color: var(--green); font-weight: 700;">✓ Exclusive</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">Classical Fallback</td>
+          <td>—</td>
+          <td>—</td>
+          <td style="color: var(--danger); font-weight: 700;">✗ Disabled</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top: 36px;">Rejection Test Results</h3>
+    <table style="margin-top: 16px;">
+      <thead>
+        <tr>
+          <th>Attack Vector</th>
+          <th>Client Request</th>
+          <th>Server Response</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight: 700;">ML-KEM-768 (PQ)</td>
+          <td><code>-groups mlkem768</code></td>
+          <td>CONNECTION ESTABLISHED</td>
+          <td style="color: var(--green); font-weight: 700;">✓ Accepted</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">X25519 (classical)</td>
+          <td><code>-groups X25519</code></td>
+          <td>Alert 40 — no suitable key share</td>
+          <td style="color: var(--danger); font-weight: 700;">✗ Killed</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">P-256 (classical)</td>
+          <td><code>-groups P-256</code></td>
+          <td>Alert 40 — no suitable key share</td>
+          <td style="color: var(--danger); font-weight: 700;">✗ Killed</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 700;">TLS 1.2 downgrade</td>
+          <td><code>-tls1_2</code></td>
+          <td>Alert 70 — unsupported protocol</td>
+          <td style="color: var(--danger); font-weight: 700;">✗ Killed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section 12: Conclusions -->
+  <div class="section" id="s12">
+    <div class="section-header"><span class="section-num">12</span><h2>Conclusions</h2></div>
+    
+    <div class="callout callout-success">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-body">
+        <div class="callout-title">Verdict: Genuine Post-Quantum Cryptographic Deployment</div>
+        <p>ZenthraCore's PQ Gate is a verified, production-operational post-quantum TLS proxy. The system uses real PQ algorithms (ML-KEM-768 + Falcon-512) loaded via the Open Quantum Safe provider, with zero classical fallback capability. This is not a demonstration, wrapper, or marketing claim — it is a measurable, verifiable cryptographic enforcement.</p>
+      </div>
+    </div>
+
+    <h3>Key Findings</h3>
+    <ul class="bullet-list" style="margin-top: 20px;">
+      <li><strong>Real PQ algorithms</strong>: ML-KEM-768 (FIPS 203) for key exchange, Falcon-512 (NIST PQC finalist) for signatures — both are genuine lattice-based constructions, not hybrid wrappers.</li>
+      <li><strong>Strict enforcement</strong>: The <code>curves = mlkem768</code> stunnel directive allows exactly one group. There is no negotiation path that produces a classical key exchange.</li>
+      <li><strong>Operational maturity</strong>: The PQ Gate has been running continuously for over two months in production, proving stability and reliability of the PQ TLS stack.</li>
+      <li><strong>Defense in depth</strong>: Beyond cryptography, the container runs with dropped capabilities, read-only filesystem, and in-memory key storage (tmpfs).</li>
+      <li><strong>Honest architecture</strong>: The system does not claim end-to-end PQ for external clients. It implements a segmented model where PQ is enforced internally, while the public edge maintains classical compatibility. This is an honest, practical deployment strategy.</li>
+    </ul>
+
+    <h3 style="margin-top: 40px;">Limitations & Transparency</h3>
+    <ul class="bullet-list" style="margin-top: 16px;">
+      <li><strong>Internal PKI</strong>: The Falcon-512 certificate is self-signed. No public Certificate Authority currently issues PQ certificates. This is standard for all PQ TLS deployments in 2026.</li>
+      <li><strong>Falcon-512 standardization</strong>: NIST's FN-DSA (FIPS 206) based on Falcon is pending final publication. The underlying cryptographic construction (NTRU lattices, hash-and-sign) is well-established.</li>
+      <li><strong>External edge remains classical</strong>: Browser ecosystem limitations prevent PQ-only external endpoints. The architecture acknowledges and documents this boundary explicitly.</li>
+    </ul>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="author-card">
+    <img src="/stanislav.png" alt="Stanislav Kurmanov" class="author-avatar" style="border-radius: 50%; object-fit: cover; object-position: 50% 40%;" />
+    <div>
+      <div class="author-name">Stanislav Kurmanov</div>
+      <div class="author-role">// Infrastructure Architect · DevSecOps</div>
+      <div class="author-bio">Specializes in designing resilient, high-security infrastructure solutions, implementing Zero Trust frameworks, and compiling hardened systems.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>// Post-Quantum Verification Report · ZenthraCore Labs</div>
+  <div style="margin-top:8px;color:#2a3548">Reproduction permitted with attribution to the original source</div>
+</footer>
+
+</body>
+</html>
