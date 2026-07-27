@@ -212,7 +212,33 @@ footer{border-top:1px solid var(--border);padding:40px 32px;text-align:center;fo
 .footer-links a{color:var(--text-dim);text-decoration:none;transition:color .2s;}
 .footer-links a:hover{color:var(--accent);}
 
-@media(max-width:640px){.header-inner,.tldr,.container{padding:0 20px;}.section-header{flex-direction:column;align-items:flex-start;gap:8px;}.author-card{flex-direction:column;}.final-quote{padding:28px 24px;}.top-nav{padding:12px 20px;}.nav-logo-text{font-size:16px;}.nav-back{font-size:12px;padding:6px 12px;}}
+html,body{overflow-x:hidden;width:100%;max-width:100vw;}
+img,svg{max-width:100%;height:auto;}
+table{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.code-block{max-width:100%;box-sizing:border-box;}
+.code-content{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+code{word-break:break-word;overflow-wrap:anywhere;}
+
+@media(max-width:640px){
+  header{padding:50px 0 35px;}
+  .header-inner,.tldr,.container{padding:0 16px;}
+  .section-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  .author-card{flex-direction:column;}
+  .lesson{flex-direction:column;gap:10px;padding:18px 20px;}
+  .final-quote{padding:24px 18px;}
+  .top-nav{padding:10px 16px;}
+  .top-nav-inner{gap:8px;}
+  .nav-logo-text{font-size:15px;}
+  .nav-back{font-size:11px;padding:5px 10px;gap:4px;flex-shrink:0;}
+  .callout{padding:16px 18px;gap:12px;flex-direction:column;}
+  h1{font-size:clamp(20px,5.5vw,28px);word-break:break-word;}
+  h2{font-size:clamp(16px,4.5vw,22px);}
+}
+@media(max-width:400px){
+  .nav-logo-text{font-size:13px;}
+  .nav-logo img{height:24px;width:24px;}
+  .nav-back{font-size:10px;padding:4px 8px;}
+}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 .section,.tldr-box,.code-block,.callout{animation:fadeUp .45s ease both;}
 </style>
