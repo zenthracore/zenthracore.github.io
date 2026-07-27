@@ -4,7 +4,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>When the Linux System Started Lying — Kernel Compromise Investigation</title>
+<meta name="description" content="Investigation of a suspected kernel-level compromise in a BrainyCP production environment. DNS flood, falsified command output, empty lsmod, and swapping the kernel on a live compromised system.">
+<meta name="keywords" content="kernel compromise, Linux rootkit, BrainyCP, DFIR, incident response, kernel module, lsmod, DNS flood, compromised server, forensic investigation">
+<meta name="author" content="Stanislav Kurmanov">
+<link rel="canonical" href="https://zenthracore.github.io/incidents/kernel-compromise-brainycp-2026.html">
 <meta http-equiv="onion-location" content="http://zenthra7ubutlvmohgjhdopshukaftchhgnlfdqdqzj45k7pp7braqad.onion/incidents/kernel-compromise-brainycp-2026.html" />
+
+<!-- Open Graph / Social -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="When the Linux System Started Lying — Kernel Compromise Investigation">
+<meta property="og:description" content="Investigation of a suspected kernel-level compromise in a BrainyCP production environment. Outbound DNS flood, falsified command output, and live kernel swapping.">
+<meta property="og:url" content="https://zenthracore.github.io/incidents/kernel-compromise-brainycp-2026.html">
+<meta property="og:site_name" content="ZenthraCore">
+<meta property="og:image" content="https://zenthracore.github.io/og-image.png">
+<meta property="article:published_time" content="2026-05-06">
+<meta property="article:author" content="Stanislav Kurmanov">
+<meta property="article:section" content="Incident Response">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="When the Linux System Started Lying — Kernel Compromise Investigation">
+<meta name="twitter:description" content="Investigation of a suspected kernel-level compromise in a BrainyCP production environment. Outbound DNS flood, falsified command output, and live kernel swapping.">
+<meta name="twitter:image" content="https://zenthracore.github.io/og-image.png">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "When the Linux System Started Lying — Kernel Compromise Investigation",
+  "description": "Investigation of a suspected kernel-level compromise in a BrainyCP production environment. DNS flood, falsified command output, empty lsmod, and swapping the kernel on a live compromised system.",
+  "url": "https://zenthracore.github.io/incidents/kernel-compromise-brainycp-2026.html",
+  "datePublished": "2026-05-06",
+  "author": {
+    "@type": "Person",
+    "name": "Stanislav Kurmanov",
+    "jobTitle": "Infrastructure Architect & DevSecOps Specialist"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ZenthraCore"
+  },
+  "keywords": "kernel compromise, Linux rootkit, BrainyCP, DFIR, incident response"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0a0c0f;--bg2:#0f1218;--surface:#1a2030;--border:#2a3548;--border2:#3a4a60;--text:#c8d4e8;--text-dim:#7a90b0;--text-muted:#4a5a70;--accent:#00d4ff;--danger:#ff4444;--warn:#ff9900;--green:#00ff88;--purple:#a855f7;--heading:#e8f0ff;--code-bg:#0d1117;}

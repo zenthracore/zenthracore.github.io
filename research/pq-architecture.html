@@ -4,7 +4,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Post-Quantum Segmented Transport Architecture — ZenthraCore</title>
+<meta name="description" content="Formal security whitepaper detailing ZenthraCore's hybrid public edge and strict internal post-quantum transport enclave using ML-KEM-768 and Falcon-512 cryptographic standards.">
+<meta name="keywords" content="post-quantum cryptography, ML-KEM-768, Falcon-512, TLS 1.3, PQC architecture, quantum-safe, NIST FIPS 203, transport security, cryptographic boundary">
+<meta name="author" content="Stanislav Kurmanov">
+<link rel="canonical" href="https://zenthracore.github.io/research/pq-architecture.html">
 <meta http-equiv="onion-location" content="http://zenthra7ubutlvmohgjhdopshukaftchhgnlfdqdqzj45k7pp7braqad.onion/research/pq-architecture.html" />
+
+<!-- Open Graph / Social -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Post-Quantum Segmented Transport Architecture — ZenthraCore">
+<meta property="og:description" content="Formal security whitepaper detailing ZenthraCore's hybrid public edge and strict internal post-quantum transport enclave using ML-KEM-768 and Falcon-512 cryptographic standards.">
+<meta property="og:url" content="https://zenthracore.github.io/research/pq-architecture.html">
+<meta property="og:site_name" content="ZenthraCore">
+<meta property="og:image" content="https://zenthracore.github.io/og-image.png">
+<meta property="article:published_time" content="2026-06-13">
+<meta property="article:author" content="Stanislav Kurmanov">
+<meta property="article:section" content="Security Research">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Post-Quantum Segmented Transport Architecture — ZenthraCore">
+<meta name="twitter:description" content="Formal security whitepaper detailing ZenthraCore's hybrid public edge and strict internal post-quantum transport enclave using ML-KEM-768 and Falcon-512 cryptographic standards.">
+<meta name="twitter:image" content="https://zenthracore.github.io/og-image.png">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Post-Quantum Segmented Transport Architecture",
+  "description": "Formal security whitepaper detailing ZenthraCore's hybrid public edge and strict internal post-quantum transport enclave using ML-KEM-768 and Falcon-512 cryptographic standards.",
+  "url": "https://zenthracore.github.io/research/pq-architecture.html",
+  "datePublished": "2026-06-13",
+  "author": {
+    "@type": "Person",
+    "name": "Stanislav Kurmanov",
+    "jobTitle": "Infrastructure Architect & DevSecOps Specialist"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ZenthraCore"
+  },
+  "keywords": "post-quantum cryptography, ML-KEM-768, Falcon-512, TLS 1.3, PQC architecture"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0a0c0f;--bg2:#0f1218;--surface:#1a2030;--border:#2a3548;--border2:#3a4a60;--text:#c8d4e8;--text-dim:#7a90b0;--text-muted:#4a5a70;--accent:#00d4ff;--danger:#ff4444;--warn:#ff9900;--green:#00ff88;--purple:#a855f7;--heading:#e8f0ff;--code-bg:#0d1117;}

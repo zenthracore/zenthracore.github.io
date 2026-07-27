@@ -4,7 +4,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hardened Swarm & Gentoo Linux Security Architecture Specification — ZenthraCore</title>
+<meta name="description" content="Security architecture specification for hardened Docker Swarm orchestration on Gentoo Linux. Network segmentation, mTLS enforcement, and Zero Trust implementation guide.">
+<meta name="keywords" content="Docker Swarm, Gentoo Linux, zero trust, mTLS, network segmentation, container security, hardened Linux, security architecture">
+<meta name="author" content="Stanislav Kurmanov">
+<link rel="canonical" href="https://zenthracore.github.io/incidents/zero-trust-swarm-gentoo.html">
 <meta http-equiv="onion-location" content="http://zenthra7ubutlvmohgjhdopshukaftchhgnlfdqdqzj45k7pp7braqad.onion/incidents/zero-trust-swarm-gentoo.html" />
+
+<!-- Open Graph / Social -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hardened Swarm & Gentoo Linux Security Architecture Specification — ZenthraCore">
+<meta property="og:description" content="Security architecture specification for hardened Docker Swarm orchestration on Gentoo Linux. Strict network segmentation, customized Gentoo Hardened Linux compilation, and mTLS enforcement.">
+<meta property="og:url" content="https://zenthracore.github.io/incidents/zero-trust-swarm-gentoo.html">
+<meta property="og:site_name" content="ZenthraCore">
+<meta property="og:image" content="https://zenthracore.github.io/og-image.png">
+<meta property="article:published_time" content="2026-06-13">
+<meta property="article:author" content="Stanislav Kurmanov">
+<meta property="article:section" content="Architecture Specification">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hardened Swarm & Gentoo Linux Security Architecture Specification — ZenthraCore">
+<meta name="twitter:description" content="Security architecture specification for hardened Docker Swarm orchestration on Gentoo Linux. Strict network segmentation, customized Gentoo Hardened Linux compilation, and mTLS enforcement.">
+<meta name="twitter:image" content="https://zenthracore.github.io/og-image.png">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Hardened Swarm & Gentoo Linux Security Architecture Specification",
+  "description": "Security architecture specification for hardened Docker Swarm orchestration on Gentoo Linux. Network segmentation, mTLS enforcement, and Zero Trust implementation guide.",
+  "url": "https://zenthracore.github.io/incidents/zero-trust-swarm-gentoo.html",
+  "datePublished": "2026-06-13",
+  "author": {
+    "@type": "Person",
+    "name": "Stanislav Kurmanov",
+    "jobTitle": "Infrastructure Architect & DevSecOps Specialist"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ZenthraCore"
+  },
+  "keywords": "Docker Swarm, Gentoo Linux, zero trust, mTLS, container security"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;700;900&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0a0c0f;--bg2:#0f1218;--surface:#1a2030;--border:#2a3548;--border2:#3a4a60;--text:#c8d4e8;--text-dim:#7a90b0;--text-muted:#4a5a70;--accent:#00d4ff;--danger:#ff4444;--warn:#ff9900;--green:#00ff88;--purple:#a855f7;--heading:#e8f0ff;--code-bg:#0d1117;}
